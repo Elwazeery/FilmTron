@@ -278,7 +278,7 @@ fn app_creator(launch: Launch, graphics: graphics::GraphicsStart, created: Arc<A
         }));
         app.hooks.pick_save = Some(Box::new(|name: &str| {
             rfd::FileDialog::new()
-                .add_filter(filmcraft_ui_egui::i18n::t("FilmCraft Project"), &file_filters::extensions(&["fcproj"]))
+                .add_filter(filmcraft_ui_egui::i18n::t("FilmCraft Project").replace("FilmCraft", "FilmTron"), &file_filters::extensions(&["fcproj"]))
                 .set_file_name(name)
                 .save_file()
                 .map(|p| p.to_string_lossy().to_string())
@@ -446,7 +446,7 @@ fn run_dialog_off_thread(dialog: filmcraft_ui_egui::native_dialogs::FileDialog) 
     use filmcraft_ui_egui::native_dialogs::FileDialog;
     let t = |s: &str| filmcraft_ui_egui::i18n::t(s).to_string();
     let media = t("Media");
-    let project = t("FilmCraft Project");
+    let project = t("FilmCraft Project").replace("FilmCraft", "FilmTron");
     let project_exts = project_patterns();
     let dialog = prepare_dialog(dialog);
     let (tx, rx) = std::sync::mpsc::channel();
