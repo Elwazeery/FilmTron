@@ -88,11 +88,11 @@ fn main() -> eframe::Result {
             return Ok(());
         }
         Ok(Cli::Version) => {
-            tell(&format!("filmcraft {}\n", env!("CARGO_PKG_VERSION")), false);
+            tell(&format!("FilmTron {}\n", env!("CARGO_PKG_VERSION")), false);
             return Ok(());
         }
         Err(e) => {
-            tell(&format!("filmcraft: {e}\n\n{}", args::USAGE), true);
+            tell(&format!("FilmTron: {e}\n\n{}", args::USAGE), true);
             std::process::exit(2);
         }
     };
