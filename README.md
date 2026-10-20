@@ -1,5 +1,8 @@
 > **2026-10-20 source import verified:** Rust workspace `Cargo.toml`, upstream license files, and `docs/upstream/IMPORT-RECORD.txt` are present on `main`. Upstream ancestry imported by a two-parent merge. Native build, Rebrand, GPU/PSD/VFX performance and complete cloud MCP remain OPEN. See [original upstream README](docs/upstream/ORIGINAL-README.md) and [source receipt](docs/upstream/IMPORT-RECORD.txt).
 
+> **Source implementation update — 2026-10-20:** Original upstream repository imported with full Git ancestry; first native FilmTron window/Windows VERSIONINFO/CLI identity changes are on `main`. Source-only branding/provenance guards added under `tests/test_tron_branding.py` and `.github/workflows/tron-source-tests.yml`. See [source-backed native control / MCP security gap audit](docs/implementation/07-NATIVE-CONTROL-AND-MCP-SECURITY-AUDIT.md). Full visual rebrand, Windows/macOS native compilation, secure Desktop Agent, SSO/entitlements and live cloud MCP parity are **NOT VERIFIED**.
+
+
 # FilmTron — Independent Tron Creative Desktop Application
 
 **Source status (2026-10-20): UPSTREAM SOURCE IMPORTED / NATIVE BUILD UNVERIFIED.** Original `storytold/filmcraft` Git commit `cdf43fd366e378da266cb6d3c94549a45244be1f` merged with ancestry and licenses; see `docs/upstream/IMPORT-RECORD.txt`. Initial window title/Windows metadata rebrand landed; full app/installer/icon rebrand, tests, native MCP and cloud deployment remain OPEN.
