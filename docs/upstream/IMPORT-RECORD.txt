@@ -1,0 +1,5 @@
+Upstream: storytold/filmcraft
+Upstream SHA: cdf43fd366e378da266cb6d3c94549a45244be1f
+Tron pre-import SHA: fa27e3ed23be6c428bc8284329bb6fc0ecd352e3
+Import mode: unrelated-history merge; prefer Tron docs on conflicts
+Upstream workflows: quarantined in docs/upstream/workflows
