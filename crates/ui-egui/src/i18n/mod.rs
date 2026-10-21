@@ -49,6 +49,8 @@ pub enum Language {
     It,
     /// Korean; Hangul needs an installed system font ([`korean_font_available`]).
     Ko,
+    /// Arabic (`ar`); shaped right-to-left with GemiFontSans / system Arabic fallback (`rtl.rs`).
+    Ar,
 }
 
 static JAPANESE: OnceLock<Catalog> = OnceLock::new();
@@ -62,9 +64,49 @@ static FRENCH: OnceLock<Catalog> = OnceLock::new();
 static KOREAN: OnceLock<Catalog> = OnceLock::new();
 static INDONESIAN: OnceLock<Catalog> = OnceLock::new();
 static ITALIAN: OnceLock<Catalog> = OnceLock::new();
+static ARABIC: OnceLock<Catalog> = OnceLock::new();
+
+const ARABIC_TSV: &str = "\
+\tFile\tملف
+\tEdit\tتحرير
+\tClip\tمقطع
+\tSequence\tتسلسل
+\tMarkers\tعلامات
+\tGraphics and Titles\tالرسوميات والعناوين
+\tView\tعرض
+\tWindow\tنافذة
+\tHelp\tمساعدة
+\tAudio\tصوت
+\tSettings\tالإعدادات
+\tPreferences\tالتفضيلات
+\tAppearance\tالمظهر
+\tLanguage\tاللغة
+\tWorkspaces\tمساحات العمل
+\tExport\tتصدير
+\tImport\tاستيراد
+\tAbout FilmTron\tحول FilmTron
+\tAbout FilmCraft\tحول FilmTron
+\tDark\tداكن
+\tLight\tفاتح
+\tDarkest\tالأكثر دكنة
+";
 
 impl Language {
-    pub const ALL: [Self; 12] = [Self::En, Self::Ja, Self::Es, Self::PtBr, Self::Uk, Self::ZhCn, Self::De, Self::Ru, Self::Fr, Self::Id, Self::Ko, Self::It];
+    pub const ALL: [Self; 13] = [
+        Self::En,
+        Self::Ja,
+        Self::Es,
+        Self::PtBr,
+        Self::Uk,
+        Self::ZhCn,
+        Self::De,
+        Self::Ru,
+        Self::Fr,
+        Self::Id,
+        Self::Ko,
+        Self::It,
+        Self::Ar,
+    ];
 
     pub fn name(self) -> &'static str {
         match self {
@@ -80,6 +122,7 @@ impl Language {
             Self::Id => "Bahasa Indonesia",
             Self::It => "Italiano",
             Self::Ko => "한국어",
+            Self::Ar => "العربية",
         }
     }
 
@@ -97,6 +140,7 @@ impl Language {
             "id" => Some(Self::Id),
             "it" => Some(Self::It),
             "ko" => Some(Self::Ko),
+            "ar" => Some(Self::Ar),
             _ => None,
         }
     }
@@ -111,7 +155,7 @@ impl Language {
     /// only for Simplified locales (`zh`, `zh-CN`, `zh-SG`, `zh-Hans…`); Traditional ones (`zh-TW`,
     /// `zh-HK`, `zh-MO`, `zh-Hant…`) are skipped.
     pub fn from_locales(tags: &[String]) -> Self {
-        const PRIMARY: [(&str, Language); 12] = [
+        const PRIMARY: [(&str, Language); 13] = [
             ("en", Language::En),
             ("ja", Language::Ja),
             ("es", Language::Es),
@@ -124,6 +168,7 @@ impl Language {
             ("in", Language::Id),
             ("it", Language::It),
             ("ko", Language::Ko),
+            ("ar", Language::Ar),
         ];
         tags.iter()
             .find_map(|tag| {
@@ -156,6 +201,7 @@ impl Language {
             Self::Id => "id",
             Self::It => "it",
             Self::Ko => "ko",
+            Self::Ar => "ar",
         }
     }
 
@@ -174,6 +220,7 @@ impl Language {
             Self::Id => Some(INDONESIAN.get_or_init(|| Catalog::parse(include_str!("id.tsv")))),
             Self::It => Some(ITALIAN.get_or_init(|| Catalog::parse(include_str!("it.tsv")))),
             Self::Ko => Some(KOREAN.get_or_init(|| Catalog::parse(include_str!("ko.tsv")))),
+            Self::Ar => Some(ARABIC.get_or_init(|| Catalog::parse(ARABIC_TSV))),
         }
     }
 
@@ -1093,7 +1140,11 @@ mod tests {
     fn ukrainian_entries_cover_the_original_menu_catalog() {
         let app = crate::FilmcraftApp::new(filmcraft_engine::Session::default());
         let items = crate::menus::menu_items(&app);
-        let known = |text: &str| crate::menus::MENUS.contains(&text) || items.iter().any(|it| it.label == text || it.path.iter().any(|p| p == text));
+        let known = |text: &str| {
+            let aliased = catalog::BRAND_ALIASES.iter().find(|(old, _)| *old == text).map_or(text, |(_, new)| *new);
+            crate::menus::MENUS.contains(&aliased)
+                || items.iter().any(|it| it.label == text || it.label == aliased || it.path.iter().any(|p| p == text || p == aliased))
+        };
         let (entries, _) = catalog::parse_entries(include_str!("uk.tsv"));
         for (_, en, _) in entries {
             assert!(known(&en) || en == "Settings", "not a menu label: {en}");
@@ -1200,7 +1251,11 @@ mod tests {
     fn russian_entries_cover_the_original_menu_catalog() {
         let app = crate::FilmcraftApp::new(filmcraft_engine::Session::default());
         let items = crate::menus::menu_items(&app);
-        let known = |text: &str| crate::menus::MENUS.contains(&text) || items.iter().any(|it| it.label == text || it.path.iter().any(|p| p == text));
+        let known = |text: &str| {
+            let aliased = catalog::BRAND_ALIASES.iter().find(|(old, _)| *old == text).map_or(text, |(_, new)| *new);
+            crate::menus::MENUS.contains(&aliased)
+                || items.iter().any(|it| it.label == text || it.label == aliased || it.path.iter().any(|p| p == text || p == aliased))
+        };
         let (entries, _) = catalog::parse_entries(include_str!("ru.tsv"));
         for (_, en, _) in entries {
             assert!(known(&en) || en == "Settings", "not a menu label: {en}");

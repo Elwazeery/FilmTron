@@ -1,0 +1,9 @@
+asset:        04-audio-workspace-mixer.png
+title:        FilmTron Audio workspace with Audio Track Mixer, Meters and Essential Sound
+author:       FilmTron & FilmCraft contributors
+source:       original work (rendered natively via wgpu in crates/ui-egui/tests/filmtron_acceptance.rs)
+license:      MIT OR Apache-2.0
+license-file: LICENSE-MIT
+added:        2026-10-21 by Elwazeery
+notes:        1600x980 native wgpu screenshot of the FilmTron Audio workspace showing the multitrack Audio Track Mixer,
+              Essential Sound panel, audio meters, and timeline waveforms. Procedural demo media only; no Adobe artwork.

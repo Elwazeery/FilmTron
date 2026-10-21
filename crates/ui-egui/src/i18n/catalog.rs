@@ -56,16 +56,53 @@ pub fn parse_entries(text: &str) -> (Vec<Entry>, Vec<String>) {
     (entries, errors)
 }
 
+/// Legacy FilmCraft menu/dialog strings mapped to their FilmTron branded equivalents.
+pub const BRAND_ALIASES: &[(&str, &str)] = &[
+    ("Join the ArtCraft Discord…", "Original ArtCraft Discord…"),
+    ("ArtCraft Website", "ArtCraft Upstream Website"),
+    ("FilmCraft on getartcraft.com", "Original FilmCraft Website"),
+    ("FilmCraft on GitHub", "FilmTron on GitHub"),
+    ("About FilmCraft", "About FilmTron"),
+    ("Hide FilmCraft", "Hide FilmTron"),
+    ("Quit FilmCraft", "Quit FilmTron"),
+    ("FilmCraft hit an error", "FilmTron hit an error"),
+    (
+        "Shows the version, community links and credits in a FilmCraft window.",
+        "Shows the FilmTron version, upstream credits and community links.",
+    ),
+];
+
 impl Catalog {
     pub fn parse(text: &str) -> Catalog {
         let mut c = Catalog::default();
-        for (ctx, src, tr) in parse_entries(text).0 {
+        let entries = parse_entries(text).0;
+        for (ctx, src, tr) in &entries {
             if ctx.is_empty() {
-                c.plain.insert(src, tr);
+                c.plain.insert(src.clone(), tr.clone());
             } else {
-                c.contextual.insert(format!("{ctx}\u{1}{src}"), tr);
+                c.contextual.insert(format!("{ctx}\u{1}{src}"), tr.clone());
             }
         }
+        for (ctx, src, tr) in &entries {
+            if src.contains("FilmCraft") {
+                let branded_src = src.replace("FilmCraft", "FilmTron");
+                let branded_tr = tr.replace("FilmCraft", "FilmTron");
+                if ctx.is_empty() {
+                    c.plain.entry(branded_src).or_insert(branded_tr);
+                } else {
+                    c.contextual.entry(format!("{ctx}\u{1}{branded_src}")).or_insert(branded_tr);
+                }
+            }
+        }
+        for (old_src, new_src) in BRAND_ALIASES {
+            if let Some(tr) = c.plain.get(*old_src).cloned() {
+                c.plain.entry((*new_src).to_string()).or_insert_with(|| tr.replace("FilmCraft", "FilmTron"));
+            }
+        }
+        let dark = c.plain.get("Dark").cloned().unwrap_or_else(|| "Dark".to_string());
+        let light = c.plain.get("Light").cloned().unwrap_or_else(|| "Light".to_string());
+        c.plain.entry("Inferno Pixel Glass (Dark)".to_string()).or_insert_with(|| format!("Inferno Pixel Glass ({dark})"));
+        c.plain.entry("Inferno Pixel Glass (Light)".to_string()).or_insert_with(|| format!("Inferno Pixel Glass ({light})"));
         c
     }
 

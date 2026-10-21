@@ -35,6 +35,8 @@ fn join_error(e: tokio::task::JoinError) -> AutomationError {
 #[derive(Clone)]
 pub struct FilmcraftMcp {
     backend: Arc<Backend>,
+    idempotency: Arc<Mutex<crate::security::IdempotencyCache>>,
+    workspace: Option<crate::security::AuthorizedWorkspace>,
     tool_router: ToolRouter<Self>,
 }
 
@@ -196,10 +198,24 @@ fn wrap(r: Result<Value, AutomationError>) -> Result<CallToolResult, McpError> {
 
 impl FilmcraftMcp {
     pub fn headless(session: Session) -> Self {
-        Self { backend: Arc::new(Backend::Headless(Arc::new(Mutex::new(session)))), tool_router: Self::tool_router() }
+        Self {
+            backend: Arc::new(Backend::Headless(Arc::new(Mutex::new(session)))),
+            idempotency: Arc::new(Mutex::new(crate::security::IdempotencyCache::new())),
+            workspace: crate::security::AuthorizedWorkspace::from_env().ok().flatten(),
+            tool_router: Self::tool_router(),
+        }
     }
     pub fn bridge(addr: &str) -> Result<Self, AutomationError> {
-        Ok(Self { backend: Arc::new(Backend::Bridge(Arc::new(BridgeClient::new(addr)?))), tool_router: Self::tool_router() })
+        Ok(Self {
+            backend: Arc::new(Backend::Bridge(Arc::new(BridgeClient::new(addr)?))),
+            idempotency: Arc::new(Mutex::new(crate::security::IdempotencyCache::new())),
+            workspace: crate::security::AuthorizedWorkspace::from_env().ok().flatten(),
+            tool_router: Self::tool_router(),
+        })
+    }
+    pub fn with_workspace(mut self, workspace: crate::security::AuthorizedWorkspace) -> Self {
+        self.workspace = Some(workspace);
+        self
     }
 
     pub async fn serve_stdio(self) -> Result<(), AutomationError> {
@@ -261,14 +277,20 @@ impl FilmcraftMcp {
 
     /// Run an engine command on whichever backend.
     pub async fn run(&self, id: &str, params: Value) -> Result<Value, AutomationError> {
+        if let Some(ws) = &self.workspace {
+            ws.authorize_command(id, &params)?;
+        }
         match &*self.backend {
             Backend::Headless(s) => {
                 let s = s.clone();
+                let idempotency = self.idempotency.clone();
+                let workspace = self.workspace.clone();
                 let id = id.to_string();
                 tokio::task::spawn_blocking(move || {
                     // A command that panicked earlier poisoned the lock; the session is still usable.
                     let mut g = s.lock().unwrap_or_else(PoisonError::into_inner);
-                    g.execute(&id, params).map_err(AutomationError::from)
+                    let mut cache = idempotency.lock().unwrap_or_else(PoisonError::into_inner);
+                    crate::security::execute_guarded(&mut g, &mut cache, workspace.as_ref(), &id, params)
                 })
                 .await
                 .map_err(join_error)?

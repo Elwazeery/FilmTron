@@ -35,6 +35,8 @@ const SCRIPTS: &[Script] = &[
         code: "Arab",
         sample: "ابتثجحخدذرزسشصضطظعغفقكلمنهويءآأؤإئةى،؟",
         preferred: &[
+            "GemiFontSans",
+            "GemiFont Sans",
             "Noto Sans Arabic UI",
             "Noto Sans Arabic",
             "SF Arabic",

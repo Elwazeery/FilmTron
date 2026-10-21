@@ -16,21 +16,45 @@ pub enum ThemeKind {
     /// Slightly lighter grey panels (Premiere's brightness slider mid position).
     Medium,
     Light,
+    /// GemiTokens Inferno Pixel Glass (Dark) — Obsidian Glass surfaces + Inferno Crimson/Gold accents.
+    InfernoDark,
+    /// GemiTokens Inferno Pixel Glass (Light) — Warm Ivory surfaces + Crimson accents.
+    InfernoLight,
 }
 
 impl ThemeKind {
-    /// Settings ▸ Appearance ▸ Color Theme value (`darkest`, `dark`, `light`).
+    pub const ALL: [ThemeKind; 5] = [ThemeKind::Dark, ThemeKind::Medium, ThemeKind::Light, ThemeKind::InfernoDark, ThemeKind::InfernoLight];
+
+    pub fn is_dark(self) -> bool {
+        !matches!(self, ThemeKind::Light | ThemeKind::InfernoLight)
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            ThemeKind::Dark => "Darkest",
+            ThemeKind::Medium => "Dark",
+            ThemeKind::Light => "Light",
+            ThemeKind::InfernoDark => "Inferno Pixel Glass (Dark)",
+            ThemeKind::InfernoLight => "Inferno Pixel Glass (Light)",
+        }
+    }
+
+    /// Settings ▸ Appearance ▸ Color Theme value (`darkest`, `dark`, `light`, `infernoDark`, `infernoLight`).
     pub fn pref_name(self) -> &'static str {
         match self {
             ThemeKind::Dark => "darkest",
             ThemeKind::Medium => "dark",
             ThemeKind::Light => "light",
+            ThemeKind::InfernoDark => "infernoDark",
+            ThemeKind::InfernoLight => "infernoLight",
         }
     }
     pub fn from_pref(s: &str) -> ThemeKind {
         match s {
             "dark" => ThemeKind::Medium,
             "light" => ThemeKind::Light,
+            "infernoDark" | "inferno_dark" | "inferno-dark" => ThemeKind::InfernoDark,
+            "infernoLight" | "inferno_light" | "inferno-light" => ThemeKind::InfernoLight,
             _ => ThemeKind::Dark,
         }
     }
@@ -39,6 +63,8 @@ impl ThemeKind {
             "dark" | "darkest" => Some(ThemeKind::Dark),
             "medium" | "grey" | "gray" => Some(ThemeKind::Medium),
             "light" => Some(ThemeKind::Light),
+            "infernodark" | "inferno_dark" | "inferno-dark" => Some(ThemeKind::InfernoDark),
+            "infernolight" | "inferno_light" | "inferno-light" => Some(ThemeKind::InfernoLight),
             _ => None,
         }
     }
@@ -330,6 +356,129 @@ impl Tokens {
                 tl_ruler_text: Color32::from_rgb(80, 80, 80),
                 ..dark
             },
+            ThemeKind::InfernoDark => Tokens {
+                kind,
+                app_bg: Color32::from_rgb(0x08, 0x07, 0x0c),
+                header_bg: Color32::from_rgb(0x0e, 0x0c, 0x14),
+                panel_bg: Color32::from_rgb(0x13, 0x11, 0x1c),
+                tab_bg: Color32::from_rgb(0x0b, 0x0a, 0x10),
+                tab_text: Color32::from_rgb(0x9e, 0x98, 0xaa),
+                tab_text_active: Color32::WHITE,
+                focus: Color32::from_rgb(0xff, 0xd4, 0x37),
+                accent: Color32::from_rgb(0xf8, 0x39, 0x42),
+                accent_hover: Color32::from_rgb(0xff, 0x6b, 0x2b),
+                text: Color32::from_rgb(0xf5, 0xf2, 0xeb),
+                text_dim: Color32::from_rgb(0xb5, 0xb0, 0xbf),
+                text_faint: Color32::from_rgb(0x78, 0x72, 0x85),
+                icon: Color32::from_rgb(0xcf, 0xca, 0xd8),
+                icon_active: Color32::WHITE,
+                hover: Color32::from_rgb(0x1e, 0x1a, 0x2b),
+                pressed: Color32::from_rgb(0x2a, 0x24, 0x3b),
+                field_bg: Color32::from_rgb(0x0b, 0x0a, 0x10),
+                field_border: Color32::from_rgb(0x26, 0x22, 0x35),
+                separator: Color32::from_rgb(0x1f, 0x1b, 0x2c),
+                row_alt: Color32::from_rgb(0x17, 0x14, 0x22),
+                row_selected: Color32::from_rgb(0x3d, 0x16, 0x22),
+                hot_text: Color32::from_rgb(0xff, 0xd4, 0x37),
+                pill_active_bg: Color32::from_rgb(0x3d, 0x16, 0x22),
+                clip_bar_bg: Color32::from_rgb(0x2a, 0x18, 0x26),
+                // Strictly color-neutral (R == G == B) for video frames & scopes
+                plot_bg: Color32::from_rgb(0x10, 0x10, 0x10),
+                monitor_bg: Color32::from_rgb(0x0c, 0x0c, 0x0c),
+                tl_bg: Color32::from_rgb(0x0d, 0x0b, 0x12),
+                tl_track_bg: Color32::from_rgb(0x13, 0x11, 0x1c),
+                tl_track_bg_alt: Color32::from_rgb(0x10, 0x0e, 0x18),
+                tl_header_bg: Color32::from_rgb(0x17, 0x14, 0x22),
+                tl_ruler_bg: Color32::from_rgb(0x0b, 0x0a, 0x10),
+                tl_ruler_tick: Color32::from_rgb(0x6a, 0x64, 0x78),
+                tl_ruler_text: Color32::from_rgb(0xb5, 0xb0, 0xbf),
+                playhead: Color32::from_rgb(0xf8, 0x39, 0x42),
+                track_target: Color32::from_rgb(0xc8, 0x1e, 0x32),
+                timecode: Color32::from_rgb(0xff, 0xd4, 0x37),
+                ..dark
+            },
+            ThemeKind::InfernoLight => Tokens {
+                kind,
+                app_bg: Color32::from_rgb(0xf7, 0xf4, 0xee),
+                header_bg: Color32::from_rgb(0xef, 0xec, 0xe4),
+                panel_bg: Color32::from_rgb(0xfa, 0xf8, 0xf3),
+                tab_bg: Color32::from_rgb(0xe8, 0xe4, 0xda),
+                tab_text: Color32::from_rgb(0x54, 0x4f, 0x60),
+                tab_text_active: Color32::from_rgb(0x10, 0x0e, 0x16),
+                focus: Color32::from_rgb(0xc8, 0x1e, 0x32),
+                accent: Color32::from_rgb(0xc8, 0x1e, 0x32),
+                accent_hover: Color32::from_rgb(0xa8, 0x15, 0x26),
+                text: Color32::from_rgb(0x14, 0x12, 0x1a),
+                text_dim: Color32::from_rgb(0x4a, 0x46, 0x56),
+                text_faint: Color32::from_rgb(0x76, 0x71, 0x84),
+                icon: Color32::from_rgb(0x3b, 0x37, 0x46),
+                icon_active: Color32::from_rgb(0x10, 0x0e, 0x16),
+                hover: Color32::from_rgb(0xea, 0xe5, 0xdb),
+                pressed: Color32::from_rgb(0xdf, 0xd9, 0xcd),
+                field_bg: Color32::WHITE,
+                field_border: Color32::from_rgb(0xcf, 0xca, 0xc0),
+                separator: Color32::from_rgb(0xdd, 0xd8, 0xce),
+                row_alt: Color32::from_rgb(0xf2, 0xef, 0xe8),
+                row_selected: Color32::from_rgb(0xf9, 0xd7, 0xda),
+                hot_text: Color32::from_rgb(0xb5, 0x19, 0x2b),
+                pill_active_bg: Color32::from_rgb(0xf9, 0xd7, 0xda),
+                clip_bar_bg: Color32::from_rgb(0xf2, 0xdc, 0xde),
+                control_surface: Color32::from_rgb(0xef, 0xec, 0xe4),
+                control_well: Color32::from_rgb(0xe3, 0xdf, 0xd5),
+                control_border: Color32::from_rgb(0xc5, 0xc0, 0xb5),
+                control_handle_bg: Color32::from_rgb(0xe6, 0xe2, 0xd8),
+                control_handle: Color32::from_rgb(0x28, 0x24, 0x32),
+                control_handle_dim: Color32::from_rgb(0x54, 0x4f, 0x60),
+                // Strictly color-neutral (R == G == B) for video frames & scopes
+                plot_bg: Color32::from_rgb(0x14, 0x14, 0x14),
+                plot_grid: Color32::from_rgb(0x2c, 0x2c, 0x2c),
+                plot_axis: Color32::from_rgb(0x44, 0x44, 0x44),
+                plot_handle: Color32::from_rgb(0xe0, 0xe0, 0xe0),
+                plot_handle_dim: Color32::from_rgb(0x90, 0x90, 0x90),
+                meter_bg: Color32::from_rgb(0x14, 0x14, 0x14),
+                meter_readout_bg: Color32::from_rgb(0xef, 0xec, 0xe4),
+                meter_clip_off: Color32::from_rgb(0x98, 0x94, 0x8c),
+                panner_bg: Color32::from_gray(225),
+                panner_border: Color32::from_gray(165),
+                panner_speaker: Color32::from_gray(105),
+                fader_knob: Color32::from_gray(135),
+                eq_track: Color32::from_gray(200),
+                eq_tick: Color32::from_gray(150),
+                eq_knob: Color32::from_gray(85),
+                eq_knob_active: Color32::from_gray(34),
+                eq_node: Color32::from_gray(50),
+                eq_node_off: Color32::from_gray(140),
+                crossover_handle: Color32::from_gray(50),
+                keyframe_plot_bg: Color32::from_gray(245),
+                keyframe_plot_grid: Color32::from_gray(210),
+                keyframe_plot_axis: Color32::from_gray(170),
+                keyframe_handle: Color32::from_gray(50),
+                switch_fill: Color32::from_gray(60),
+                switch_knob: Color32::from_gray(232),
+                switch_border: Color32::from_gray(110),
+                slider_disabled_track: Color32::from_gray(190),
+                slider_disabled_knob: Color32::from_gray(140),
+                button_hover: Color32::from_gray(220),
+                button_border: Color32::from_gray(180),
+                caption_track_bg: Color32::from_rgb(0xeb, 0xe3, 0xd8),
+                scroll_thumb: Color32::from_gray(160),
+                scroll_thumb_hover: Color32::from_gray(135),
+                vertical_scroll_thumb: Color32::from_gray(160),
+                disabled_clip_bg: Color32::from_gray(195),
+                in_out_shade: Color32::from_gray(195),
+                tl_bg: Color32::from_rgb(0xef, 0xec, 0xe4),
+                tl_track_bg: Color32::from_rgb(0xf7, 0xf4, 0xee),
+                tl_track_bg_alt: Color32::from_rgb(0xf1, 0xed, 0xe5),
+                tl_header_bg: Color32::from_rgb(0xea, 0xe6, 0xdc),
+                tl_ruler_bg: Color32::from_rgb(0xe5, 0xe0, 0xd5),
+                tl_ruler_tick: Color32::from_rgb(0x7c, 0x77, 0x88),
+                tl_ruler_text: Color32::from_rgb(0x4a, 0x46, 0x56),
+                playhead: Color32::from_rgb(0xc8, 0x1e, 0x32),
+                track_target: Color32::from_rgb(0xa8, 0x15, 0x26),
+                monitor_bg: Color32::from_rgb(0x14, 0x14, 0x14),
+                timecode: Color32::from_rgb(0xb5, 0x19, 0x2b),
+                ..dark
+            },
         }
     }
 
@@ -337,7 +486,11 @@ impl Tokens {
     /// the focus outline, the playhead, timecodes, drag values and track targeting) and accessible
     /// colour contrast (brighter secondary text and borders).
     pub fn with_appearance(mut self, highlight: Option<[u8; 3]>, accessible_contrast: bool) -> Self {
-        if let Some([r, g, b]) = highlight {
+        let is_inferno = matches!(self.kind, ThemeKind::InfernoDark | ThemeKind::InfernoLight);
+        let is_legacy_default_highlight = highlight == Some([0x2f, 0x6b, 0xdf]);
+        if let Some([r, g, b]) = highlight
+            && !(is_inferno && is_legacy_default_highlight)
+        {
             let c = Color32::from_rgb(r, g, b);
             // A highlight of the user's own also colours the theme's other blues: the same hue, as
             // much more or less saturated and bright as each of them is than the theme's highlight.
@@ -360,7 +513,7 @@ impl Tokens {
             self.accent_hover = Color32::from_rgb(lift(r), lift(g), lift(b));
         }
         if accessible_contrast {
-            if self.kind == ThemeKind::Light {
+            if !self.kind.is_dark() {
                 self.text_dim = Color32::from_rgb(40, 40, 40);
                 self.text_faint = Color32::from_rgb(80, 80, 80);
                 self.field_border = Color32::from_rgb(110, 110, 110);
@@ -458,7 +611,7 @@ fn add_craft_fonts(fonts: &mut FontDefinitions) {
 }
 
 pub fn apply_visuals(ctx: &egui::Context, t: &Tokens) {
-    let light = t.kind == ThemeKind::Light;
+    let light = !t.kind.is_dark();
     // FilmCraft decides between light and dark itself (Settings ▸ Appearance ▸ Appearance Mode), so
     // egui must not switch to its other built-in style when the system appearance changes.
     ctx.set_theme(if light { egui::Theme::Light } else { egui::Theme::Dark });
@@ -712,5 +865,28 @@ mod tests {
                 assert!(defs.families.values().flatten().all(|name| !name.starts_with("craft:")));
             }
         });
+    }
+
+    #[test]
+    fn inferno_pixel_glass_themes_preserve_color_neutral_monitors_and_scopes() {
+        let dark = Tokens::for_kind(ThemeKind::InfernoDark);
+        let light = Tokens::for_kind(ThemeKind::InfernoLight);
+        assert!(ThemeKind::InfernoDark.is_dark());
+        assert!(!ThemeKind::InfernoLight.is_dark());
+        assert_eq!(ThemeKind::from_pref("infernoDark"), ThemeKind::InfernoDark);
+        assert_eq!(ThemeKind::from_pref("infernoLight"), ThemeKind::InfernoLight);
+        assert_eq!(ThemeKind::from_name("infernoDark"), Some(ThemeKind::InfernoDark));
+        assert_eq!(ThemeKind::from_name("infernoLight"), Some(ThemeKind::InfernoLight));
+        assert_eq!(dark.accent, Color32::from_rgb(0xf8, 0x39, 0x42));
+        assert_eq!(dark.focus, Color32::from_rgb(0xff, 0xd4, 0x37));
+        assert_eq!(light.accent, Color32::from_rgb(0xc8, 0x1e, 0x32));
+        // Monitor and scope plot surfaces must be strictly color-neutral (R == G == B) across all themes
+        for k in ThemeKind::ALL {
+            let t = Tokens::for_kind(k);
+            assert_eq!(t.monitor_bg.r(), t.monitor_bg.g(), "{k:?} monitor_bg R != G");
+            assert_eq!(t.monitor_bg.g(), t.monitor_bg.b(), "{k:?} monitor_bg G != B");
+            assert_eq!(t.plot_bg.r(), t.plot_bg.g(), "{k:?} plot_bg R != G");
+            assert_eq!(t.plot_bg.g(), t.plot_bg.b(), "{k:?} plot_bg G != B");
+        }
     }
 }

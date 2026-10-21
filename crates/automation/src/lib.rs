@@ -11,10 +11,16 @@
 #![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable))]
 
 pub mod bridge;
+pub mod gemiguard;
+pub mod gemimcp;
 pub mod long_job;
+pub mod security;
 pub mod server;
 
 pub use bridge::BridgeClient;
+pub use gemiguard::{EntitlementDecision, EntitlementStatus, OfflineLease, PkceChallenge, RevocationList, evaluate_entitlement};
+pub use gemimcp::{FederatedToolCall, OutboundBridgeAdapter, ProductManifest, build_product_manifest, write_product_manifest};
+pub use security::AuthorizedWorkspace;
 pub use server::FilmcraftMcp;
 
 #[derive(Debug, thiserror::Error)]

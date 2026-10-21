@@ -1,0 +1,10 @@
+asset:        06-about-filmtron-dialog.png
+title:        FilmTron About dialog showing GemiTron platform integration and upstream FilmCraft attribution
+author:       FilmTron & FilmCraft contributors
+source:       original work (rendered natively via wgpu in crates/ui-egui/tests/filmtron_acceptance.rs)
+license:      MIT OR Apache-2.0
+license-file: LICENSE-MIT
+added:        2026-10-21 by Elwazeery
+notes:        1600x980 native wgpu screenshot of the About FilmTron modal dialog showing FilmTron branding, GemiTokens /
+              GemiMCP / GemiGuard integration note, and preserved upstream storytold/filmcraft attribution. Procedural demo
+              media only; no Adobe artwork.

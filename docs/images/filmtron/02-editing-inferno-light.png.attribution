@@ -1,0 +1,10 @@
+asset:        02-editing-inferno-light.png
+title:        FilmTron Editing workspace in Inferno Pixel Glass (Light) theme
+author:       FilmTron & FilmCraft contributors
+source:       original work (rendered natively via wgpu in crates/ui-egui/tests/filmtron_acceptance.rs)
+license:      MIT OR Apache-2.0
+license-file: LICENSE-MIT
+added:        2026-10-21 by Elwazeery
+notes:        1600x980 native wgpu screenshot of the FilmTron Editing workspace using GemiTokens Inferno Pixel Glass (Light)
+              chrome (#F4F3F8 background, #FAF9FC panel surfaces, #EA580C/#DC2626/#D97706 accents) while preserving neutral
+              RGB(24,24,24) Source and Program video monitors for accurate grading. Procedural demo media only; no Adobe artwork.

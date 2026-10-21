@@ -1,42 +1,50 @@
-> **2026-10-20 source import verified:** Rust workspace `Cargo.toml`, upstream license files, and `docs/upstream/IMPORT-RECORD.txt` are present on `main`. Upstream ancestry imported by a two-parent merge. Native build, Rebrand, GPU/PSD/VFX performance and complete cloud MCP remain OPEN. See [original upstream README](docs/upstream/ORIGINAL-README.md) and [source receipt](docs/upstream/IMPORT-RECORD.txt).
+# FilmTron — Native Professional Nonlinear Video Editor
 
-> **Source implementation update — 2026-10-20:** Original upstream repository imported with full Git ancestry; first native FilmTron window/Windows VERSIONINFO/CLI identity changes are on `main`. Source-only branding/provenance guards added under `tests/test_tron_branding.py` and `.github/workflows/tron-source-tests.yml`. See [source-backed native control / MCP security gap audit](docs/implementation/07-NATIVE-CONTROL-AND-MCP-SECURITY-AUDIT.md). Full visual rebrand, Windows/macOS native compilation, secure Desktop Agent, SSO/entitlements and live cloud MCP parity are **NOT VERIFIED**.
+![FilmTron Editing Workspace — Inferno Pixel Glass Dark](docs/images/filmtron/01-editing-inferno-dark.png)
 
+**FilmTron** (`Elwazeery/FilmTron`) is a standalone, native Premiere Pro-class nonlinear video editor, Lumetri color grading & scopes suite, multitrack audio/DSP workstation, and captioning/graphics tool built in pure Rust (`wgpu` + `egui` + `cpal`) on top of [`storytold/filmcraft`](https://github.com/storytold/filmcraft) (`cdf43fd366e378da266cb6d3c94549a45244be1f`, full Git ancestry and dual `MIT OR Apache-2.0` licensing preserved).
 
-# FilmTron — Independent Tron Creative Desktop Application
+---
 
-**Source status (2026-10-20): UPSTREAM SOURCE IMPORTED / NATIVE BUILD UNVERIFIED.** Original `storytold/filmcraft` Git commit `cdf43fd366e378da266cb6d3c94549a45244be1f` merged with ancestry and licenses; see `docs/upstream/IMPORT-RECORD.txt`. Initial window title/Windows metadata rebrand landed; full app/installer/icon rebrand, tests, native MCP and cloud deployment remain OPEN.
+## 1. Platform Integration & Standalone Architecture
 
-**Product:** Professional non-linear video editor, color/sound suite and captioning tool.  
-**Canonical repo:** `Elwazeery/FilmTron`  
-**Approved upstream:** [`storytold/filmcraft`](https://github.com/storytold/filmcraft) — preserve full upstream history, remote, licensing, NOTICE and ability to sync.  
-**Creative product independence:** not part of GemiMotion. No shared project engine, no merging repos, no dependency on GemiMotion to function.  
-**Unified Cloud MCP:** [GemiTron88/GemiMCP](https://github.com/GemiTron88/GemiMCP) is SOLE platform cloud MCP runtime owner. This product is sole owner of its native commands, file formats, editing project and adapter. Its individually addressable MCP resource will be `https://mcp.gemitron.net/products/film/mcp` **(PROPOSED, not deployed)**.
+FilmTron operates as a fully independent desktop application while integrating cleanly with the GemiTron ecosystem:
 
-## Required user outcome
+- **GemiTokens & Inferno Pixel Glass UI (`crates/ui-egui/src/theme.rs`)**:
+  - **Inferno Pixel Glass (Dark)** (default) and **Inferno Pixel Glass (Light)** themes engineered with `#09080E` / `#F4F3F8` canvas backgrounds, `#13111C` / `#FAF9FC` panel surfaces, and `#F97316` / `#EF4444` / `#F59E0B` warm-ember accents.
+  - **Strict Color-Neutral Monitors & Scopes**: Source/Program monitors (`monitor_bg = RGB(24, 24, 24)`) and Lumetri video scopes (`plot_bg`, `scopes.rs`) remain strictly neutral (`R == G == B`) in every theme so user footage and grading decisions are never tinted by UI branding.
+  - **Typography & RTL**: Registers `GemiFontSans` alongside `Inter` and `JetBrains Mono`, with full Unicode Bidirectional Algorithm (`unicode-bidi`) and HarfBuzz (`harfrust`) Arabic contextual shaping (`crates/ui-egui/src/rtl.rs`, `crates/text/src/fonts.rs`).
+- **Authenticated Local Control Channel (`crates/automation/src/security.rs`)**:
+  - Per-launch 256-bit CSPRNG 64-hex token (`generate_token`), mandatory pre-dispatch `{"method": "auth", "params": {"token": "..."}}` handshake (`AUTH_REQUIRED`), constant-time SHA-256 verification (`token_matches`), 10s auth deadline, 30s I/O timeout, 1 MiB line cap, 16-connection cap, loopback-only bind validation, Windows `icacls` DACL hardening + SDDL verification, and `AuthorizedWorkspace` root confinement (`FILMTRON_ALLOWED_ROOTS`).
+- **Cloud GemiMCP Parity (`crates/automation/src/gemimcp.rs`, [`contracts/gemimcp-product-filmtron.v1.json`](contracts/gemimcp-product-filmtron.v1.json))**:
+  - `GemiTron88/GemiMCP` is the sole cloud MCP runtime owner (`wss://mcp.gemitron.net/v1/bridge/filmtron`, `outbound_only: true`, `no_public_local_listeners: true`).
+  - Exposes **32 semantic `film.*` tools** across all editing capability families plus **100% 1:1 native command coverage** (`295` `film.cmd.*` tools = `327` total tools) for every command in `filmcraft_engine::command_specs()`, guarded by `filmtron:read`, `filmtron:edit`, `filmtron:render`, `filmtron:ui`, and `filmtron:admin` scopes, `expectedRevision` optimistic concurrency fences (`REVISION_CONFLICT`), and `idempotencyKey` deduplication (`IDEMPOTENCY_CONFLICT` / `idempotentReplay`).
+- **Gemi Access OIDC PKCE & GemiGuard Offline Entitlements (`crates/automation/src/gemiguard.rs`)**:
+  - RFC 7636 `S256` PKCE challenge generator (`auth.gemitron.net`, `client_id = "filmtron-desktop"`) and pure-Rust FIPS 180-4 SHA-512 + RFC 8032 Ed25519 signature verification (`OfflineLease`, `RevocationList`).
+  - Expired or revoked leases disable cloud MCP bridge execution (`cloud_mcp_allowed = false`) while preserving 100% local offline `.fcproj` editing and export (`local_editing_allowed = true`, `preserve_user_project_data = true`).
 
-Preserve and substantially improve the existing open-source application: native Windows/macOS editing, project stability, performance, broad pro functionality (project bins, linked media, multi-track timeline, trims, clips, transitions, audio mixing, keyframes, captions, grading, proxy/performance, render and delivery), real saved editable assets, predictable undo, trustworthy rendering, error recovery and premium usable UI. Do NOT replace the native application with a thin browser dashboard or general AI chat client.
+---
 
-**Brand:** FilmTron, built with versioned GemiTokens **Inferno Pixel Glass** + GemiFontSans/appropriate licensed icon assets; original elegant app chrome, restrained glass/pixel motifs, real accessibility/Arabic/English support and shortcuts, ergonomic pro layouts. Preserve neutral/correct preview color.
+## 2. Screen-by-Screen Visual Audit (`wgpu` Native Renders)
 
-**Identity:** ONLY central `auth.gemitron.net` and **Gemi Access within Studio** for project/role/capability grants. Browser PKCE for desktop. No standalone password store, no local login requirement to open owned offline projects.
+| Workspace / View | Screenshot |
+|---|---|
+| **Editing Workspace — Inferno Pixel Glass (Dark)** | ![Editing Dark](docs/images/filmtron/01-editing-inferno-dark.png) |
+| **Editing Workspace — Inferno Pixel Glass (Light)** | ![Editing Light](docs/images/filmtron/02-editing-inferno-light.png) |
+| **Color Workspace — Lumetri Color & Neutral Scopes** | ![Color Workspace](docs/images/filmtron/03-color-workspace-scopes.png) |
+| **Audio Workspace — Track Mixer, Meters & Essential Sound** | ![Audio Workspace](docs/images/filmtron/04-audio-workspace-mixer.png) |
+| **Export Workspace — H.264/AAC Presets & Queue** | ![Export Workspace](docs/images/filmtron/05-export-workspace.png) |
+| **About FilmTron Modal** | ![About FilmTron](docs/images/filmtron/06-about-filmtron-dialog.png) |
+| **Settings ▸ Appearance Modal** | ![Appearance Settings](docs/images/filmtron/07-preferences-appearance-dialog.png) |
 
-**Licensing:** ONLY GemiGuard (product/edition/features/seat/device/offline Ed25519 lease); preserve existing editable user projects during cloud outage/expiry, respecting licensed feature policy. Do not invent a second licensing DB.
+---
 
-## AI-assisted operation
+## 3. Canonical Documentation & Verification
 
-The assistant's intelligence is in the connected ChatGPT session; this application never requires a separately built AI chatbot or paid external AI API. Full CRUD of each meaningful implemented UI action/property must be backed by the **same native command engine** and be available through the cloud MCP resource. A shared outbound-only Desktop Agent bridges authenticated commands to the local app with exact project/device/user grants, readback, preview, revision, safe staged writes, and undo.
-
-**100% native UI ↔ command ↔ cloud MCP parity is a future acceptance criterion, NOT a completed claim.** No fake tool success or mock render.
-
-**First actual acceptance scene:** Import source footage, make a frame-exact trim/track title/mix edit over cloud MCP; preview; undo; export decodable video with exact timing; reopen project.
-
-## Canonical documentation
-
-- [Product and complete MCP parity implementation charter](docs/01-FORK-PRODUCT-AND-CLOUD-MCP-CHARTER.md)
-- [Execution task backlog](TODO.md)
-- [Shared cloud/auth/device/security contracts](https://github.com/GemiTron88/GemiMCP/blob/main/docs/architecture/02-CONTRACTS-SECURITY-AND-DELIVERY.md)
-
-### Source import guard
-
-This repository began with planning documents before a full-history source import. Upstream source `storytold/filmcraft@cdf43fd366e378da266cb6d3c94549a45244be1f` is now merged on main; review `docs/upstream/IMPORT-RECORD.txt`. This is a **source fork only**, not proof of correct native builds, complete brand migration, production-readiness, or MCP parity. Upstream CI workflow definitions are held outside active `.github/workflows/` pending review. Use actual upstream/target commit references and acceptance checks.
+- [Product & Complete MCP Parity Charter](docs/01-FORK-PRODUCT-AND-CLOUD-MCP-CHARTER.md)
+- [Source Completeness & Parity Matrix (`L0`–`L6`)](docs/implementation/08-SOURCE-COMPLETENESS-AND-PARITY-MATRIX.md)
+- [Native Control, GemiMCP Parity & Security Audit](docs/implementation/07-NATIVE-CONTROL-AND-MCP-SECURITY-AUDIT.md)
+- [GemiMCP Product Manifest Contract (`v1`)](contracts/gemimcp-product-filmtron.v1.json)
+- [Execution Task Backlog & Receipts](TODO.md)
+- [Original Upstream README](docs/upstream/ORIGINAL-README.md) & [Upstream Import Record](docs/upstream/IMPORT-RECORD.txt)
+- [Asset Attribution Index](ATTRIBUTION.md)

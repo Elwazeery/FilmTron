@@ -102,9 +102,63 @@ pub fn handle(app: &mut FilmcraftApp, ctx: &egui::Context, req: &ControlRequest)
     match req.method.as_str() {
         "engine.execute" | "ui.menu.invoke" => {
             let Some(id) = s("command").or(s("id")) else { return err("missing `command`") };
-            let params = p.get("params").cloned().unwrap_or(json!({}));
+            let mut params = p.get("params").cloned().unwrap_or(json!({}));
+            let expected_revision = p.get("expectedRevision").or_else(|| params.get("expectedRevision")).and_then(Value::as_u64);
+            let idempotency_key = p
+                .get("idempotencyKey")
+                .or_else(|| params.get("idempotencyKey"))
+                .and_then(Value::as_str)
+                .map(str::to_string);
+            let has_guards = expected_revision.is_some() || idempotency_key.is_some();
+            if let Some(obj) = params.as_object_mut() {
+                obj.remove("expectedRevision");
+                obj.remove("idempotencyKey");
+            }
+            let params_str = serde_json::to_string(&params).unwrap_or_default();
+            if let Some(key) = &idempotency_key {
+                let cache_id = egui::Id::new("control_idempotency_cache");
+                let existing: Option<Vec<(String, String, String, Value)>> = ctx.data(|d| d.get_temp(cache_id));
+                if let Some(entries) = existing
+                    && let Some((_, _, old_params, mut cached)) = entries.into_iter().find(|(c, k, _, _)| c == id && k == key)
+                {
+                    if old_params != params_str {
+                        return err(format!("IDEMPOTENCY_CONFLICT: idempotencyKey `{key}` for `{id}` was already used with different parameters"));
+                    }
+                    if let Some(obj) = cached.as_object_mut() {
+                        obj.insert("idempotentReplay".into(), json!(true));
+                        obj.insert("revision".into(), json!(app.session.revision));
+                    }
+                    return ok(cached);
+                }
+            }
+            if let Some(expected) = expected_revision
+                && app.session.revision != expected
+            {
+                return err(format!("REVISION_CONFLICT: expected revision {expected}, actual revision {}", app.session.revision));
+            }
             match crate::menus::invoke(app, ctx, id, params) {
-                Ok(v) => ok(v),
+                Ok(mut v) => {
+                    if has_guards {
+                        if let Some(obj) = v.as_object_mut() {
+                            obj.entry("revision").or_insert_with(|| json!(app.session.revision));
+                            obj.entry("idempotentReplay").or_insert_with(|| json!(false));
+                        } else {
+                            v = json!({"value": v, "revision": app.session.revision, "idempotentReplay": false});
+                        }
+                    }
+                    if let Some(key) = idempotency_key {
+                        let cache_id = egui::Id::new("control_idempotency_cache");
+                        ctx.data_mut(|d| {
+                            let mut entries: Vec<(String, String, String, Value)> = d.get_temp(cache_id).unwrap_or_default();
+                            if entries.len() >= 256 {
+                                entries.remove(0);
+                            }
+                            entries.push((id.to_string(), key, params_str, v.clone()));
+                            d.insert_temp(cache_id, entries);
+                        });
+                    }
+                    ok(v)
+                }
                 Err(e) => err(e),
             }
         }
@@ -155,7 +209,7 @@ pub fn handle(app: &mut FilmcraftApp, ctx: &egui::Context, req: &ControlRequest)
             if let Some(th) = s("theme") {
                 match crate::theme::ThemeKind::from_name(th) {
                     Some(k) => crate::panels::settings::set_theme(app, ctx, k),
-                    None => return err("unknown theme (dark, medium, light)"),
+                    None => return err("unknown theme (inferno-dark, inferno-light, dark, medium, light)"),
                 }
             }
             // the open Settings dialog: page and draft values (`{"page": id, "values": {key: value}}`)
@@ -509,6 +563,7 @@ pub fn inspect(app: &FilmcraftApp, ctx: &egui::Context) -> Value {
         "sourcePlayback": {"playing": app.source_playback.clock.playing, "audioClock": app.source_playback.clock.audio_clock, "playhead": app.session.state.source_playhead.0},
         "playback": {"playing": app.playback.playing, "speed": app.playback.speed, "loop": app.playback.looping, "audioClock": app.playback.audio_clock, "dropped": app.playback.meter.counts().1, "shown": app.playback.meter.counts().0, "preroll": app.playback.preroll.is_some()},
         "playhead": app.session.playhead().0,
+        "revision": app.session.revision,
         "activeSequence": app.session.state.active_sequence.map(|i| i.0),
         "selection": app.session.state.selection.iter().map(|c| c.0).collect::<Vec<_>>(),
         "elements": app.auto.previous.len(),

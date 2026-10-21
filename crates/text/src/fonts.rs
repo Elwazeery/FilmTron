@@ -87,6 +87,15 @@ impl DirectorySource {
     /// The platform's standard font folders.
     pub fn system() -> Self {
         let mut dirs: Vec<PathBuf> = Vec::new();
+        if let Some(gemi_dir) = std::env::var_os("GEMI_FONTS_DIR").map(PathBuf::from)
+            && gemi_dir.is_dir()
+        {
+            dirs.push(gemi_dir);
+        }
+        let default_gemi = PathBuf::from(r"D:\GemiTron\GemiFonts\fonts\GemiFontSans\ttf");
+        if default_gemi.is_dir() && !dirs.contains(&default_gemi) {
+            dirs.push(default_gemi);
+        }
         let home = std::env::var_os("HOME").map(PathBuf::from);
         if cfg!(target_os = "macos") {
             dirs.extend(["/System/Library/Fonts", "/Library/Fonts"].map(PathBuf::from));

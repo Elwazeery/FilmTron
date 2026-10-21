@@ -1,0 +1,10 @@
+asset:        03-color-workspace-scopes.png
+title:        FilmTron Color workspace with Lumetri Color and neutral-gray Lumetri Scopes
+author:       FilmTron & FilmCraft contributors
+source:       original work (rendered natively via wgpu in crates/ui-egui/tests/filmtron_acceptance.rs)
+license:      MIT OR Apache-2.0
+license-file: LICENSE-MIT
+added:        2026-10-21 by Elwazeery
+notes:        1600x980 native wgpu screenshot of the FilmTron Color workspace showing Lumetri Color grading controls and
+              strictly color-neutral Lumetri Scopes alongside the Program Monitor and Timeline. Procedural demo media only;
+              no Adobe artwork.

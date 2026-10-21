@@ -20,6 +20,7 @@ type Conn = (BufReader<tokio::net::tcp::OwnedReadHalf>, tokio::net::tcp::OwnedWr
 
 pub struct BridgeClient {
     addr: String,
+    token: Option<String>,
     /// Connections with no request in flight. A request takes one (or opens one) for its whole
     /// round trip and puts it back only once the reply is read, so a slow or abandoned request
     /// never holds up the others or leaves its late reply for the next one to read (#1538).
@@ -31,11 +32,17 @@ impl BridgeClient {
     /// `addr` such as `127.0.0.1:9876` (loopback only).
     pub fn new(addr: impl Into<String>) -> Result<Self, AutomationError> {
         let addr = addr.into();
-        let host = addr.rsplit_once(':').map(|(h, _)| h).unwrap_or(&addr);
-        if !matches!(host, "127.0.0.1" | "localhost" | "[::1]" | "::1") {
-            return Err(AutomationError::BadRequest(format!("bridge address must be loopback, got `{addr}`")));
-        }
-        Ok(Self { addr, idle: Mutex::new(Vec::new()), next_id: AtomicU64::new(1) })
+        crate::security::validate_loopback_bind_addr(&addr)?;
+        Ok(Self { addr, token: None, idle: Mutex::new(Vec::new()), next_id: AtomicU64::new(1) })
+    }
+
+    /// `addr` with an explicit 64-hex bearer token for the control channel's `auth` handshake.
+    pub fn with_token(addr: impl Into<String>, token: impl Into<String>) -> Result<Self, AutomationError> {
+        let addr = addr.into();
+        let token = token.into();
+        crate::security::validate_loopback_bind_addr(&addr)?;
+        crate::security::validate_token(&token)?;
+        Ok(Self { addr, token: Some(token.to_ascii_lowercase()), idle: Mutex::new(Vec::new()), next_id: AtomicU64::new(1) })
     }
 
     /// Run engine command `id` in the app. A blocking export (`file.exportMedia` with
@@ -117,12 +124,28 @@ impl BridgeClient {
     }
 
     async fn connect(&self) -> Result<Conn, AutomationError> {
+        let token = crate::security::resolve_bridge_token(&self.addr, self.token.as_deref())?;
         let s = tokio::time::timeout(Duration::from_secs(5), TcpStream::connect(&self.addr))
             .await
             .map_err(|_| AutomationError::Bridge(format!("timed out connecting to {}", self.addr)))?
             .map_err(|e| AutomationError::Bridge(format!("cannot connect to {} ({e}); start the app with `filmcraft --control <port>`", self.addr)))?;
         let (r, w) = s.into_split();
-        Ok((BufReader::new(r), w))
+        let mut conn = (BufReader::new(r), w);
+        if let Some(tok) = token {
+            let auth_line = format!("{}\n", json!({"id": 0, "method": crate::security::AUTH_METHOD, "params": {"token": tok}}));
+            conn.1.write_all(auth_line.as_bytes()).await.map_err(|e| AutomationError::Bridge(e.to_string()))?;
+            let mut reply_buf = String::new();
+            tokio::time::timeout(crate::security::AUTH_DEADLINE, conn.0.read_line(&mut reply_buf))
+                .await
+                .map_err(|_| AutomationError::Bridge("authentication timed out".into()))?
+                .map_err(|e| AutomationError::Bridge(e.to_string()))?;
+            let reply: Value = serde_json::from_str(&reply_buf).map_err(|e| AutomationError::Bridge(format!("bad auth reply: {e}")))?;
+            if reply.get("ok").and_then(Value::as_bool) != Some(true) {
+                let msg = reply.get("error").and_then(Value::as_str).unwrap_or("authentication required");
+                return Err(AutomationError::App(msg.to_string()));
+            }
+        }
+        Ok(conn)
     }
 }
 
