@@ -74,7 +74,7 @@ fn system_fonts() -> &'static [(String, Arc<FontData>)] {
             return Vec::new();
         }
         filmcraft_text::fonts::scan_system();
-        let faces: Vec<_> = filmcraft_text::fonts::all_faces().into_iter().filter(|f| f.info.origin == "system" && !f.info.italic).collect();
+        let faces: Vec<_> = filmcraft_text::fonts::all_faces().into_iter().filter(|f| matches!(f.info.origin, "bundled" | "system") && !f.info.italic).collect();
         let by_weight = |f: &&Arc<Face>| f.info.weight.abs_diff(400);
         let mut chosen: Vec<&Arc<Face>> = Vec::new();
         let mut out = Vec::new();

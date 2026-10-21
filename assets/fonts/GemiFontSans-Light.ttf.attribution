@@ -1,0 +1,8 @@
+asset:        GemiFontSans-Light.ttf
+title:        GemiFontSans Light (GemiTokens Arabic+Latin UI & graphics typeface)
+author:       The Cairo Project Authors (Mohamed Gaber et al.) / GemiFonts
+source:       https://github.com/Gue3bara/Cairo
+license:      OFL-1.1
+license-file: assets/fonts/OFL-GemiFontSans.txt
+added:        2026-10-21 by Elwazeery
+notes:        GemiFontSans Light (300) face shipped via GemiFonts / GemiTokens, embedded via include_bytes! in crates/text/src/fonts.rs and crates/ui-egui/src/theme.rs.

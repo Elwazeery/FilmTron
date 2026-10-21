@@ -528,6 +528,39 @@ impl Tokens {
         self
     }
 
+    /// Canonical primary sans-serif family for this token palette (`GemiFontSans` for Inferno Pixel
+    /// Glass / GemiTokens modes, `Inter` for legacy palettes).
+    pub fn font_sans(&self) -> &'static str {
+        match self.kind {
+            ThemeKind::InfernoDark | ThemeKind::InfernoLight => GEMI_FONT_SANS,
+            _ => filmcraft_text::fonts::DEFAULT_FAMILY,
+        }
+    }
+
+    /// Primary UI body font (`GemiFontSans` on GemiTokens palettes, proportional default elsewhere).
+    pub fn font_id(&self, size: f32) -> FontId {
+        match self.kind {
+            ThemeKind::InfernoDark | ThemeKind::InfernoLight => gemi_sans(size),
+            _ => FontId::proportional(size),
+        }
+    }
+
+    /// Medium-weight UI font (`GemiFontSans-Medium` on GemiTokens palettes, `Inter-Medium` elsewhere).
+    pub fn medium_font_id(&self, size: f32) -> FontId {
+        match self.kind {
+            ThemeKind::InfernoDark | ThemeKind::InfernoLight => gemi_medium(size),
+            _ => FontId::new(size, FontFamily::Name("medium".into())),
+        }
+    }
+
+    /// Bold/heading UI font (`GemiFontSans-Bold` on GemiTokens palettes, `Inter-SemiBold` elsewhere).
+    pub fn bold_font_id(&self, size: f32) -> FontId {
+        match self.kind {
+            ThemeKind::InfernoDark | ThemeKind::InfernoLight => gemi_bold(size),
+            _ => Self::semibold(size),
+        }
+    }
+
     /// Mono font for timecode.
     pub fn mono(size: f32) -> FontId {
         FontId::new(size, FontFamily::Monospace)
@@ -543,6 +576,22 @@ impl Tokens {
     pub fn timecode() -> FontId {
         FontId::new(16.0, FontFamily::Proportional)
     }
+}
+
+/// Canonical GemiTokens / GemiFonts Arabic+Latin UI family name.
+pub const GEMI_FONT_SANS: &str = filmcraft_text::fonts::GEMI_FONT_SANS_FAMILY;
+
+pub fn gemi_sans(size: f32) -> FontId {
+    FontId::new(size, FontFamily::Name(GEMI_FONT_SANS.into()))
+}
+pub fn gemi_light(size: f32) -> FontId {
+    FontId::new(size, FontFamily::Name("GemiFontSans-Light".into()))
+}
+pub fn gemi_medium(size: f32) -> FontId {
+    FontId::new(size, FontFamily::Name("GemiFontSans-Medium".into()))
+}
+pub fn gemi_bold(size: f32) -> FontId {
+    FontId::new(size, FontFamily::Name("GemiFontSans-Bold".into()))
 }
 
 /// Menu text: Premiere's menus are the system's, larger and brighter than panel text, one item
@@ -567,19 +616,43 @@ pub fn font_families() -> Vec<FontFamily> {
     vec![FontFamily::Proportional, FontFamily::Monospace, FontFamily::Name("semibold".into()), FontFamily::Name("medium".into())]
 }
 
-/// Install the Latin UI fonts, Chinese fallback (craft-fonts or an installed face), Japanese
-/// craft-fonts, Arabic and Hebrew fallbacks (craft-fonts or installed faces, [`crate::rtl`]) and
-/// egui visuals. Document names keep their glyphs in every interface language.
+/// Install the Latin UI fonts, GemiFontSans (GemiTokens Arabic+Latin UI), Chinese fallback
+/// (craft-fonts or an installed face), Japanese craft-fonts, Arabic and Hebrew fallbacks
+/// (craft-fonts or installed faces, [`crate::rtl`]) and egui visuals. Document names keep their
+/// glyphs in every interface language.
 pub fn install(ctx: &egui::Context, t: &Tokens) {
     let mut fonts = FontDefinitions::default();
     fonts.font_data.insert("inter".into(), Arc::new(FontData::from_static(filmcraft_text::fonts::INTER_REGULAR)));
     fonts.font_data.insert("inter-medium".into(), Arc::new(FontData::from_static(filmcraft_text::fonts::INTER_MEDIUM)));
     fonts.font_data.insert("inter-semibold".into(), Arc::new(FontData::from_static(filmcraft_text::fonts::INTER_SEMIBOLD)));
     fonts.font_data.insert("jbmono".into(), Arc::new(FontData::from_static(filmcraft_text::fonts::JETBRAINS_MONO_REGULAR)));
-    fonts.families.entry(FontFamily::Proportional).or_default().insert(0, "inter".into());
+    fonts.font_data.insert("GemiFontSans-Light".into(), Arc::new(FontData::from_static(filmcraft_text::fonts::GEMI_FONT_SANS_LIGHT)));
+    fonts.font_data.insert("GemiFontSans-Medium".into(), Arc::new(FontData::from_static(filmcraft_text::fonts::GEMI_FONT_SANS_MEDIUM)));
+    fonts.font_data.insert("GemiFontSans-Bold".into(), Arc::new(FontData::from_static(filmcraft_text::fonts::GEMI_FONT_SANS_BOLD)));
+    {
+        let prop = fonts.families.entry(FontFamily::Proportional).or_default();
+        prop.insert(0, "GemiFontSans-Medium".into());
+        prop.insert(0, "inter".into());
+    }
     fonts.families.entry(FontFamily::Monospace).or_default().insert(0, "jbmono".into());
-    fonts.families.insert(FontFamily::Name("semibold".into()), vec!["inter-semibold".into(), "inter".into()]);
-    fonts.families.insert(FontFamily::Name("medium".into()), vec!["inter-medium".into(), "inter".into()]);
+    // Named weights fall back to the default stack for missing glyphs.
+    let fallback: Vec<String> = fonts.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
+    for (fam, primary) in [
+        ("semibold", "inter-semibold"),
+        ("medium", "inter-medium"),
+        (GEMI_FONT_SANS, "GemiFontSans-Medium"),
+        ("GemiFontSans-Light", "GemiFontSans-Light"),
+        ("GemiFontSans-Medium", "GemiFontSans-Medium"),
+        ("GemiFontSans-Bold", "GemiFontSans-Bold"),
+    ] {
+        let mut stack: Vec<String> = vec![primary.into()];
+        for f in &fallback {
+            if f != primary {
+                stack.push(f.clone());
+            }
+        }
+        fonts.families.insert(FontFamily::Name(fam.into()), stack);
+    }
     // Japanese before Chinese: the two share code points, and Japanese text must keep Japanese
     // glyph forms; Chinese faces still cover the hanzi Japanese fonts lack
     add_craft_fonts(&mut fonts);
@@ -655,10 +728,10 @@ pub fn apply_visuals(ctx: &egui::Context, t: &Tokens) {
         s.spacing.button_padding = egui::vec2(8.0, 3.0);
         s.spacing.interact_size.y = 24.0;
         s.spacing.menu_margin = egui::Margin::same(4);
-        s.text_styles.insert(TextStyle::Body, FontId::new(12.0, FontFamily::Proportional));
-        s.text_styles.insert(TextStyle::Button, FontId::new(12.0, FontFamily::Proportional));
-        s.text_styles.insert(TextStyle::Small, FontId::new(11.0, FontFamily::Proportional));
-        s.text_styles.insert(TextStyle::Heading, FontId::new(15.0, FontFamily::Name("semibold".into())));
+        s.text_styles.insert(TextStyle::Body, t.font_id(12.0));
+        s.text_styles.insert(TextStyle::Button, t.font_id(12.0));
+        s.text_styles.insert(TextStyle::Small, t.font_id(11.0));
+        s.text_styles.insert(TextStyle::Heading, t.bold_font_id(15.0));
         s.text_styles.insert(TextStyle::Monospace, FontId::new(12.0, FontFamily::Monospace));
         s.animation_time = ANIMATION_TIME;
     });
@@ -880,6 +953,8 @@ mod tests {
         assert_eq!(dark.accent, Color32::from_rgb(0xf8, 0x39, 0x42));
         assert_eq!(dark.focus, Color32::from_rgb(0xff, 0xd4, 0x37));
         assert_eq!(light.accent, Color32::from_rgb(0xc8, 0x1e, 0x32));
+        assert_eq!(dark.font_sans(), GEMI_FONT_SANS);
+        assert_eq!(light.font_sans(), GEMI_FONT_SANS);
         // Monitor and scope plot surfaces must be strictly color-neutral (R == G == B) across all themes
         for k in ThemeKind::ALL {
             let t = Tokens::for_kind(k);
@@ -888,5 +963,25 @@ mod tests {
             assert_eq!(t.plot_bg.r(), t.plot_bg.g(), "{k:?} plot_bg R != G");
             assert_eq!(t.plot_bg.g(), t.plot_bg.b(), "{k:?} plot_bg G != B");
         }
+    }
+
+    #[test]
+    fn gemi_font_sans_via_gemi_tokens_is_registered_and_shapes_arabic_and_latin() {
+        let ctx = egui::Context::default();
+        let t = Tokens::for_kind(ThemeKind::InfernoDark);
+        install(&ctx, &t);
+        ctx.run_ui(egui::RawInput::default(), |_| {}).textures_delta.clear();
+        assert_eq!(t.font_sans(), "GemiFontSans");
+        ctx.run_ui(egui::RawInput::default(), |ui| {
+            for fam in ["GemiFontSans", "GemiFontSans-Light", "GemiFontSans-Medium", "GemiFontSans-Bold"] {
+                assert!(ui.ctx().fonts_mut(|f| f.families().contains(&FontFamily::Name(fam.into()))), "missing family {fam}");
+            }
+            for font in [t.font_id(13.0), t.medium_font_id(13.0), t.bold_font_id(15.0), gemi_light(12.0)] {
+                let sz = ui.painter().layout_no_wrap("FilmTron — محرر الفيديو الاحترافي".into(), font, t.text).size();
+                assert!(sz.x > 40.0 && sz.y > 8.0, "GemiFontSans shaped bilingual text: {sz:?}");
+            }
+        })
+        .textures_delta
+        .clear();
     }
 }

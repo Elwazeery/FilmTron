@@ -22,6 +22,16 @@ pub static INTER_BOLD: &[u8] = include_bytes!("../../../assets/fonts/Inter-Bold.
 pub static INTER_ITALIC: &[u8] = include_bytes!("../../../assets/fonts/Inter-Italic.ttf");
 pub static JETBRAINS_MONO_REGULAR: &[u8] = include_bytes!("../../../assets/fonts/JetBrainsMono-Regular.ttf");
 pub static NOTO_SERIF_REGULAR: &[u8] = include_bytes!("../../../assets/fonts/NotoSerif-Regular.ttf");
+pub static GEMI_FONT_SANS_LIGHT: &[u8] = include_bytes!("../../../assets/fonts/GemiFontSans-Light.ttf");
+pub static GEMI_FONT_SANS_MEDIUM: &[u8] = include_bytes!("../../../assets/fonts/GemiFontSans-Medium.ttf");
+pub static GEMI_FONT_SANS_BOLD: &[u8] = include_bytes!("../../../assets/fonts/GemiFontSans-Bold.ttf");
+
+/// GemiFontSans faces shipped with FilmTron via GemiTokens / GemiFonts (OFL-1.1; `assets/fonts`).
+pub static GEMI_BUNDLED: [(&str, &[u8]); 3] = [
+    ("GemiFontSans-Light.ttf", GEMI_FONT_SANS_LIGHT),
+    ("GemiFontSans-Medium.ttf", GEMI_FONT_SANS_MEDIUM),
+    ("GemiFontSans-Bold.ttf", GEMI_FONT_SANS_BOLD),
+];
 
 /// A font from the optional craft-fonts build input (empty unless built with `CRAFT_FONTS_DIR`; see
 /// `build.rs` and storytold/craft-fonts `docs/integration.md`).
@@ -46,6 +56,8 @@ pub const CRAFT_ORIGIN: &str = "craft-fonts";
 
 /// The default family for new text.
 pub const DEFAULT_FAMILY: &str = "Inter";
+/// Canonical GemiTokens / GemiFonts primary Arabic+Latin sans-serif family.
+pub const GEMI_FONT_SANS_FAMILY: &str = "GemiFontSans";
 
 /// Index of a face in the database.
 pub type FaceId = usize;
@@ -295,7 +307,18 @@ fn db() -> &'static RwLock<Db> {
     static DB: OnceLock<RwLock<Db>> = OnceLock::new();
     DB.get_or_init(|| {
         let mut db = Db { faces: Vec::new(), scanned: false };
-        for b in [INTER_REGULAR, INTER_MEDIUM, INTER_SEMIBOLD, INTER_BOLD, INTER_ITALIC, JETBRAINS_MONO_REGULAR, NOTO_SERIF_REGULAR] {
+        for b in [
+            INTER_REGULAR,
+            INTER_MEDIUM,
+            INTER_SEMIBOLD,
+            INTER_BOLD,
+            INTER_ITALIC,
+            JETBRAINS_MONO_REGULAR,
+            NOTO_SERIF_REGULAR,
+            GEMI_FONT_SANS_LIGHT,
+            GEMI_FONT_SANS_MEDIUM,
+            GEMI_FONT_SANS_BOLD,
+        ] {
             for n in read_faces_bytes(b) {
                 push(&mut db, info_from(n, FaceData::Static(b), "bundled"));
             }
@@ -522,6 +545,24 @@ mod tests {
         // Inter Bold Italic: nearest is Italic (400) → synth bold
         let bi = resolve("Inter", "Bold Italic");
         assert!(face(bi.face).info.italic && bi.synth_bold && !bi.synth_italic);
+    }
+
+    #[test]
+    fn gemi_font_sans_bundled_faces_cover_arabic_and_latin() {
+        let fams = families();
+        let gemi = fams.iter().find(|(f, _)| f == GEMI_FONT_SANS_FAMILY).expect("GemiFontSans");
+        assert_eq!(gemi.1.len(), 3, "Light (300), Medium (500), Bold (700): {:?}", gemi.1);
+        let sample = "FilmTron محرر الفيديو الاحترافي";
+        for (name, bytes) in GEMI_BUNDLED {
+            let font = FontRef::new(bytes).expect("GemiFontSans parses");
+            let cmap = font.charmap();
+            let missing: String = sample.chars().filter(|c| !c.is_whitespace() && cmap.map(*c).is_none_or(|g| g.to_u32() == 0)).collect();
+            assert!(missing.is_empty(), "{name} lacks sample glyphs: {missing}");
+        }
+        let inter = resolve("Inter", "Regular").face;
+        let arab_fb = face(fallback_for('م', inter));
+        assert_eq!(arab_fb.info.family, GEMI_FONT_SANS_FAMILY);
+        assert!(arab_fb.has_char('م'));
     }
 
     #[test]

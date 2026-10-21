@@ -37,7 +37,12 @@ class BrandingContract(unittest.TestCase):
         self.assertIn("Inferno Pixel Glass (Light)", theme_rs)
         self.assertIn("inferno_dark", theme_rs)
         self.assertIn("inferno_light", theme_rs)
+        self.assertIn("GEMI_FONT_SANS", theme_rs)
+        self.assertIn("fn font_sans(", theme_rs)
         self.assertIn("GemiFontSans", fonts_rs)
+        self.assertIn("GEMI_BUNDLED", fonts_rs)
+        for font_file in ("GemiFontSans-Light.ttf", "GemiFontSans-Medium.ttf", "GemiFontSans-Bold.ttf", "OFL-GemiFontSans.txt"):
+            self.assertTrue((ROOT / "assets" / "fonts" / font_file).is_file(), f"Missing bundled GemiFontSans asset: {font_file}")
 
     def test_security_gemimcp_and_gemiguard_contracts(self):
         security_rs = (ROOT / "crates" / "automation" / "src" / "security.rs").read_text(encoding="utf-8")
