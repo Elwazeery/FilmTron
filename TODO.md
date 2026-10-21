@@ -34,3 +34,9 @@
   - **Tests & Receipts:** `cargo test -p filmcraft-automation --lib security::tests` (`13/13 passed`).
 
 **Product definition of done:** Demonstrated correct native editing, real project save/reopen, real file/media result (`300,310`-byte H.264/AAC MP4 export + round-trip decode), exact UI↔native-command↔cloud-MCP parity coverage (`295/295` native commands + `32` semantic tools = `327` tools), secure project/device scope, shared GemiGuard/Gemi Access consumer contracts, and independently verified tests and screenshots.
+
+
+## 2026-10-21 — TRON Local Creative AI planning intake (NOT IMPLEMENTED)
+
+Authority: [product study](docs/creative-ai/TRON-LOCAL-CREATIVE-INTEGRATION-20261021.md), [GemiMCP common ADR](https://github.com/GemiTron88/GemiMCP/blob/main/docs/architecture/07-LOCAL-CREATIVE-AI-HYBRID-20261021.md), [creative knowledge](https://github.com/GemiTron88/GemiMCP/blob/main/docs/creative-ai/CREATIVE-KNOWLEDGE-AND-WORKFLOWS.v1.md), [TRON personality and non-premature training](https://github.com/GemiTron88/GemiMCP/blob/main/docs/creative-ai/TRON-PERSONA-AND-TRAINING-STRATEGY.v1.md), [cloud delegation v1](https://github.com/GemiTron88/GemiMCP/blob/main/contracts/CREATIVE-AI-DELEGATION.v1.md). These are current-scope requirements inside THIS canonical TODO, NOT independent shadow trackers. Reconcile with current ExecutionKit/source-native tasks BEFORE marking anything completed. Cross-repo prerequisites belong in GemiMCP not product-native work.
+- [ ] **FILM-TRON-001 / PLANNED / depends FILM-005, FILM-007 and central shared runtime.** Integrate shared TRON tab with a source/timebase-safe video editing overlay; real 15s timeline/title/music native journey, preview/audio QA, frame-accurate export/undo/reopen, direct vs delegated cloud proof, verified no GPU contention or orphan weights. No product-specific inference server.
