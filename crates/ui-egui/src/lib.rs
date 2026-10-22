@@ -61,6 +61,7 @@ pub mod source_playback;
 pub mod state;
 pub mod theme;
 pub mod tron_chat;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod tron_actions;
 mod theme_favorites;
 pub mod widgets;
@@ -2203,7 +2204,12 @@ impl eframe::App for FilmcraftApp {
                     }))
                     .collect();
                 serde_json::json!({
-                    "projectId": tron_actions::project_fingerprint(&self.session),
+                    "projectId": {
+                        #[cfg(not(target_arch = "wasm32"))]
+                        { tron_actions::project_fingerprint(&self.session) }
+                        #[cfg(target_arch = "wasm32")]
+                        { String::new() }
+                    },
                     "sequenceId": sequence_id.0,
                     "revision": self.session.revision,
                     "fpsNum": sequence.settings.frame_rate.num,
