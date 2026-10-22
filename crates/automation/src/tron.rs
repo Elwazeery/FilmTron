@@ -65,6 +65,12 @@ fn safe_identifier(id: &str) -> bool {
 
 /// These operations can touch the filesystem, rebuild timelines, or produce
 /// external media. They require a separate owner approval, not a model flag.
+fn is_file_operation(tool: &str) -> bool {
+    matches!(tool,
+        "film.project.open" | "film.project.save" | "film.media.import"
+        | "film.media.relink" | "film.render.export_media" | "film.render.export_frame")
+}
+
 fn needs_separate_approval(tool: &str) -> bool {
     matches!(tool,
         "film.project.new" | "film.project.open" | "film.project.save" | "film.project.recover"
@@ -200,6 +206,21 @@ pub fn execute_checked(
 ) -> Result<Value, String> {
     if session.revision != scope.current_revision {
         return Err(reject("NATIVE_SESSION_REVISION_CONFLICT"));
+    }
+    if session.state.active_sequence.map(|id| id.0) != scope.sequence_id {
+        return Err(reject("NATIVE_ACTIVE_SEQUENCE_CHANGED"));
+    }
+    if let Some(sequence_id) = session.state.active_sequence {
+        let Some(sequence) = session.project.sequence(sequence_id) else {
+            return Err(reject("SEQUENCE_REMOVED"));
+        };
+        let rate = sequence.settings.frame_rate;
+        if rate.num != scope.fps_num || rate.den != scope.fps_den {
+            return Err(reject("NATIVE_SEQUENCE_TIMEBASE_CHANGED"));
+        }
+    }
+    if plan.steps.iter().any(|step| is_file_operation(&step.tool)) && !adapter.has_workspace_root() {
+        return Err(reject("NATIVE_WORKSPACE_ROOT_REQUIRED"));
     }
     let preliminary = preflight(plan, scope)?;
     let catalog = semantic_tools();
