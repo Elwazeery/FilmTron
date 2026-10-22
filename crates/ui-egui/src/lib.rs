@@ -61,6 +61,7 @@ pub mod source_playback;
 pub mod state;
 pub mod theme;
 pub mod tron_chat;
+pub mod tron_actions;
 mod theme_favorites;
 pub mod widgets;
 
@@ -2202,7 +2203,7 @@ impl eframe::App for FilmcraftApp {
                     }))
                     .collect();
                 serde_json::json!({
-                    "projectId": format!("filmtron-local-{}-{}", std::process::id(), sequence_id.0),
+                    "projectId": tron_actions::project_fingerprint(&self.session),
                     "sequenceId": sequence_id.0,
                     "revision": self.session.revision,
                     "fpsNum": sequence.settings.frame_rate.num,
@@ -2211,7 +2212,7 @@ impl eframe::App for FilmcraftApp {
                 })
             })
         });
-        tron_chat::show(ui.ctx(), tron_project_state);
+        tron_chat::show(ui.ctx(), tron_project_state, &mut self.session);
         let ctx = ui.ctx().clone();
         self.last_ui_time = ctx.input(|i| i.time);
         if !self.synthetic.is_empty() {
