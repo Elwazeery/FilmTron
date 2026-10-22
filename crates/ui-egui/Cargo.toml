@@ -39,6 +39,9 @@ unicode-bidi = "0.3.18"
 image = { version = "0.25", default-features = false, features = ["png"] }
 
 # Thread/process CPU clocks for frame-job profiling (safe wrappers; see frames.rs).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+filmcraft-automation = { workspace = true }
+
 [target.'cfg(unix)'.dependencies]
 rustix = { version = "1", default-features = false, features = ["std", "time"] }
 # the same clocks on Windows (GetThreadTimes / GetProcessTimes behind a safe API; MIT OR Apache-2.0)
