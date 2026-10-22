@@ -145,6 +145,7 @@ pub fn show(ctx: &Context) {
 
     let area = ctx.content_rect();
     let x = (area.right() - 470.0).max(area.left() + 8.0);
+    let mut requested_action: Option<&'static str> = None;
     egui::Window::new("TRON · Film Creative Director")
         .id(Id::new("filmtron.tron.window"))
         .order(Order::Foreground)
@@ -191,14 +192,10 @@ pub fn show(ctx: &Context) {
                     #[cfg(not(target_arch = "wasm32"))]
                     {
                         if ui.add_enabled(enable_on, egui::Button::new("ON · تحميل")).clicked() {
-                            drop(g);
-                            broker_action(st.clone(), ctx.clone(), "on");
-                            return;
+                            requested_action = Some("on");
                         }
                         if ui.add_enabled(enable_off, egui::Button::new("OFF · إيقاف")).clicked() {
-                            drop(g);
-                            broker_action(st.clone(), ctx.clone(), "off");
-                            return;
+                            requested_action = Some("off");
                         }
                     }
                     #[cfg(target_arch = "wasm32")]
@@ -225,6 +222,12 @@ pub fn show(ctx: &Context) {
                 ui.add_enabled(false, egui::Button::new("تحليل وتنفيذ المونتاج"));
             }
         });
+    #[cfg(not(target_arch = "wasm32"))]
+    if let Some(action) = requested_action {
+        broker_action(st, ctx.clone(), action);
+    }
+    #[cfg(target_arch = "wasm32")]
+    let _ = requested_action;
     ctx.request_repaint_after(Duration::from_secs(2));
 }
 
