@@ -22,6 +22,7 @@ struct ViewState {
     active_leases: u64,
     error: Option<String>,
     input: String,
+    last_proposal: Option<serde_json::Value>,
     last_status_poll: Instant,
 }
 
@@ -39,6 +40,7 @@ impl Default for ViewState {
             active_leases: 0,
             error: None,
             input: String::new(),
+            last_proposal: None,
             last_status_poll: Instant::now(),
         }
     }
@@ -87,6 +89,7 @@ fn broker_action(st: Arc<Mutex<ViewState>>, ctx: Context, action: &'static str) 
             "on" => filmcraft_automation::tron_local::activate(),
             "off" => filmcraft_automation::tron_local::release(),
             "minimize" => filmcraft_automation::tron_local::minimize(),
+            "heartbeat" => filmcraft_automation::tron_local::heartbeat(),
             _ => filmcraft_automation::tron_local::status(),
         };
         if let Ok(mut g) = st.lock() {
@@ -115,9 +118,40 @@ fn broker_action(st: Arc<Mutex<ViewState>>, ctx: Context, action: &'static str) 
     });
 }
 
+/// Reasoning on the shared model, review only. We never automatically edit
+/// media, shift clips, overwrite files, export or modify the current session.
+#[cfg(not(target_arch = "wasm32"))]
+fn dispatch_film_plan(st: Arc<Mutex<ViewState>>, ctx: Context, prompt: String, project: serde_json::Value) {
+    if let Ok(mut g) = st.lock() {
+        if g.working || !g.power_on { return; }
+        g.working = true;
+        g.error = None;
+        g.last_proposal = None;
+    } else { return; }
+    std::thread::spawn(move || {
+        let result = filmcraft_automation::tron_local::prepare_film_plan(&prompt, &project);
+        if let Ok(mut g) = st.lock() {
+            g.working = false;
+            match result {
+                Ok(data) => {
+                    let proposal = data.get("result").unwrap_or(&data);
+                    if proposal.get("ok").and_then(serde_json::Value::as_bool) == Some(false) {
+                        g.error = proposal.get("status").and_then(serde_json::Value::as_str)
+                            .map(str::to_owned).or(Some("FILM_PLAN_REJECTED".into()));
+                    }
+                    g.last_proposal = Some(data);
+                }
+                Err(err) => { g.error = Some(err); }
+            }
+            g.last_status_poll = Instant::now();
+        }
+        ctx.request_repaint();
+    });
+}
+
 /// Passive launcher + native overlay. Does not modify FilmcraftApp playback,
 /// audio, media or timeline UI state.
-pub fn show(ctx: &Context) {
+pub fn show(ctx: &Context, project_state: Option<serde_json::Value>) {
     let st = view(ctx);
     let is_open = st.lock().map(|g| g.open).unwrap_or(false);
     if !is_open {
@@ -128,7 +162,10 @@ pub fn show(ctx: &Context) {
                 if ui.add(egui::Button::new(RichText::new("TRON · Creative AI").strong())
                     .min_size(vec2(146.0, 42.0))).clicked()
                 {
-                    if let Ok(mut g) = st.lock() { g.open = true; }
+                    if let Ok(mut g) = st.lock() {
+                        g.open = true;
+                        g.last_status_poll = Instant::now() - Duration::from_secs(20);
+                    }
                 }
             });
         return;
@@ -138,7 +175,8 @@ pub fn show(ctx: &Context) {
     }).unwrap_or(false);
     #[cfg(not(target_arch = "wasm32"))]
     if needs_poll {
-        broker_action(st.clone(), ctx.clone(), "status");
+        let active = st.lock().map(|g| g.power_on).unwrap_or(false);
+        broker_action(st.clone(), ctx.clone(), if active { "heartbeat" } else { "status" });
     }
     #[cfg(target_arch = "wasm32")]
     let _ = needs_poll;
@@ -146,6 +184,7 @@ pub fn show(ctx: &Context) {
     let area = ctx.content_rect();
     let x = (area.right() - 470.0).max(area.left() + 8.0);
     let mut requested_action: Option<&'static str> = None;
+    let mut requested_plan: Option<(String, serde_json::Value)> = None;
     egui::Window::new("TRON · Film Creative Director")
         .id(Id::new("filmtron.tron.window"))
         .order(Order::Foreground)
@@ -161,6 +200,7 @@ pub fn show(ctx: &Context) {
                     ui.weak("FilmTron · Editorial Director");
                     if ui.small_button("—").on_hover_text("تصغير").clicked() {
                         g.open = false;
+                        requested_action = Some("minimize");
                     }
                 });
                 ui.separator();
@@ -214,20 +254,41 @@ pub fn show(ctx: &Context) {
                     ui.add_space(8.0);
                     ui.weak("تنفيذ خطط المونتاج من الشات قيد التوصيل؛ زر التحميل شغال على الـShared Runtime، لكن إرسال أوامر AI مش متاح قبل ربط Native Planner.");
                 });
-                ui.add_enabled(false,
+                if let Some(last) = &g.last_proposal {
+                    ui.separator();
+                    let v = last.get("result").unwrap_or(last);
+                    ui.strong("الخطة المقترحة — لم تُنفّذ على الـTimeline");
+                    ui.label(v.get("userExplanation").and_then(serde_json::Value::as_str).unwrap_or("لا يوجد شرح بعد"));
+                    ui.label(format!("Status: {}", v.get("status").and_then(serde_json::Value::as_str).unwrap_or("UNKNOWN")));
+                    if let Some(steps) = v.get("plan").and_then(|x| x.get("steps")).and_then(serde_json::Value::as_array) {
+                        ui.weak(format!("{} native steps require scoped preflight and user approval", steps.len()));
+                    }
+                }
+                ui.separator();
+                let can_plan = g.power_on && !g.working && project_state.is_some();
+                ui.add_enabled(can_plan,
                     egui::TextEdit::multiline(&mut g.input)
                         .hint_text("وصف فكرة الفيديو أو المطلوب في الـTimeline…")
                         .desired_rows(2)
                 );
-                ui.add_enabled(false, egui::Button::new("تحليل وتنفيذ المونتاج"));
+                if ui.add_enabled(can_plan && !g.input.trim().is_empty(), egui::Button::new("فكّر واقترح خطة مونتاج")).clicked() {
+                    if let Some(project) = project_state.clone() {
+                        requested_plan = Some((g.input.clone(), project));
+                    }
+                }
+                ui.small("اقتراح فقط: لا تنفيذ تلقائي أو تصدير قبل التحقق Native والموافقة.");
             }
         });
     #[cfg(not(target_arch = "wasm32"))]
     if let Some(action) = requested_action {
         broker_action(st, ctx.clone(), action);
     }
+    #[cfg(not(target_arch = "wasm32"))]
+    if let Some((prompt, project)) = requested_plan {
+        dispatch_film_plan(view(ctx), ctx.clone(), prompt, project);
+    }
     #[cfg(target_arch = "wasm32")]
-    let _ = requested_action;
+    let _ = (requested_action, requested_plan);
     ctx.request_repaint_after(Duration::from_secs(2));
 }
 
@@ -248,5 +309,6 @@ mod tests {
         assert!(!st.power_on);
         assert!(!st.transport_connected);
         assert_eq!(st.shared_state, "NOT_LOADED");
+        assert!(st.last_proposal.is_none());
     }
 }
