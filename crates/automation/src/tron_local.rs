@@ -78,7 +78,8 @@ fn broker_request(route: &'static str, payload: Option<Value>) -> Result<Value, 
     let addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, d.port);
     let mut stream = TcpStream::connect_timeout(&addr.into(), Duration::from_secs(2))
         .map_err(|_| "TRON_SHARED_BROKER_UNREACHABLE".to_owned())?;
-    stream.set_read_timeout(Some(Duration::from_secs(160))).map_err(|e| e.to_string())?;
+    let timeout = if matches!(route, "/tron/acquire" | "/tron/film/plan") { 180 } else { 8 };
+    stream.set_read_timeout(Some(Duration::from_secs(timeout))).map_err(|e| e.to_string())?;
     stream.set_write_timeout(Some(Duration::from_secs(8))).map_err(|e| e.to_string())?;
     let method = if payload.is_some() { "POST" } else { "GET" };
     let header = format!(
