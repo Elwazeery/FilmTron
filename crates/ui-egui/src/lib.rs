@@ -2192,32 +2192,12 @@ impl eframe::App for FilmcraftApp {
         // Native facts for TRON plan proposals: never fabricate footage metadata.
         // The current project/sequence/revision is authoritative at this UI
         // snapshot; a future executor must recheck all three before mutation.
-        let tron_project_state = self.session.state.active_sequence.and_then(|sequence_id| {
-            self.session.project.sequence(sequence_id).map(|sequence| {
-                let media_refs: Vec<serde_json::Value> = self.session.project.items.iter()
-                    .filter(|(_, item)| matches!(&item.kind, filmcraft_project::ItemKind::Media(_)))
-                    .take(24)
-                    .map(|(id, _)| serde_json::json!({
-                        "id": id.0,
-                        "kind": "media",
-                        "rightsCleared": false
-                    }))
-                    .collect();
-                serde_json::json!({
-                    "projectId": {
-                        #[cfg(not(target_arch = "wasm32"))]
-                        { tron_actions::project_fingerprint(&self.session) }
-                        #[cfg(target_arch = "wasm32")]
-                        { String::new() }
-                    },
-                    "sequenceId": sequence_id.0,
-                    "revision": self.session.revision,
-                    "fpsNum": sequence.settings.frame_rate.num,
-                    "fpsDen": sequence.settings.frame_rate.den,
-                    "mediaRefs": media_refs
-                })
-            })
-        });
+        let tron_project_state = {
+            #[cfg(not(target_arch = "wasm32"))]
+            { tron_actions::build_tron_project_context(&self.session) }
+            #[cfg(target_arch = "wasm32")]
+            { None }
+        };
         tron_chat::show(ui.ctx(), tron_project_state, &mut self.session);
         let ctx = ui.ctx().clone();
         self.last_ui_time = ctx.input(|i| i.time);

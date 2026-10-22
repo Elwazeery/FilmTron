@@ -66,7 +66,17 @@ fn decode_chunked(mut rest: &[u8]) -> Result<Vec<u8>, String> {
 }
 
 fn broker_request(route: &'static str, payload: Option<Value>) -> Result<Value, String> {
-    if !matches!(route, "/tron/status" | "/tron/acquire" | "/tron/release" | "/tron/heartbeat" | "/tron/minimize" | "/tron/film/plan") {
+    if !matches!(
+        route,
+        "/tron/status"
+            | "/tron/acquire"
+            | "/tron/release"
+            | "/tron/heartbeat"
+            | "/tron/minimize"
+            | "/tron/film/plan"
+            | "/tron/film/critique"
+            | "/tron/cancel"
+    ) {
         return Err("TRON_ROUTE_NOT_ALLOWED".to_owned());
     }
     let d = discover()?;
@@ -78,7 +88,7 @@ fn broker_request(route: &'static str, payload: Option<Value>) -> Result<Value, 
     let addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, d.port);
     let mut stream = TcpStream::connect_timeout(&addr.into(), Duration::from_secs(2))
         .map_err(|_| "TRON_SHARED_BROKER_UNREACHABLE".to_owned())?;
-    let timeout = if matches!(route, "/tron/acquire" | "/tron/film/plan") { 180 } else { 8 };
+    let timeout = if matches!(route, "/tron/acquire" | "/tron/film/plan" | "/tron/film/critique") { 180 } else { 8 };
     stream.set_read_timeout(Some(Duration::from_secs(timeout))).map_err(|e| e.to_string())?;
     stream.set_write_timeout(Some(Duration::from_secs(8))).map_err(|e| e.to_string())?;
     let method = if payload.is_some() { "POST" } else { "GET" };
@@ -108,14 +118,31 @@ fn broker_request(route: &'static str, payload: Option<Value>) -> Result<Value, 
     Ok(result)
 }
 
+fn resolve_gemimcp_root() -> Result<PathBuf, String> {
+    if let Some(root) = std::env::var_os("GEMIMCP_ROOT") {
+        return Ok(PathBuf::from(root));
+    }
+    for candidate in [
+        "D:/GemiTron/GemiMCP",
+        "d:/GemiTron/GemiMCP",
+        "../GemiMCP",
+        "../../GemiMCP",
+    ] {
+        let p = PathBuf::from(candidate);
+        if p.join("scripts/tron-workstation-host.mjs").is_file() {
+            return Ok(p);
+        }
+    }
+    Err("GEMIMCP_ROOT_NOT_SET: select the local GemiMCP repository to enable TRON".to_owned())
+}
+
 /// Only an explicit ON click can start the shared GemiMCP workstation
 /// broker. A passive status/launcher call must never spawn Node/Ollama.
 /// The script is resolved from an owner-selected GemiMCP source root.
 fn broker_for_explicit_activation() -> Result<(), String> {
     if broker_request("/tron/status", None).is_ok() { return Ok(()); }
-    let root = std::env::var_os("GEMIMCP_ROOT")
-        .ok_or("GEMIMCP_ROOT_NOT_SET: select the local GemiMCP repository to enable TRON")?;
-    let script = PathBuf::from(root).join("scripts/tron-workstation-host.mjs");
+    let root = resolve_gemimcp_root()?;
+    let script = root.join("scripts/tron-workstation-host.mjs");
     if !script.is_file() { return Err("TRON_SHARED_HOST_SCRIPT_NOT_FOUND".to_owned()); }
     let mut command = std::process::Command::new("node");
     command.arg(script)
@@ -168,10 +195,27 @@ pub fn minimize() -> Result<Value, String> {
     broker_request("/tron/minimize", Some(json!({"leaseId": id()})))
 }
 
+pub fn cancel_job() -> Result<Value, String> {
+    broker_request("/tron/cancel", Some(json!({"leaseId": id(), "reason": "user_cancelled"})))
+}
+
 /** Ask the live shared model for a FILM-specific plan (never apply edits).
  * The native UI must acquire an explicit filmtron lease first.
  */
 pub fn prepare_film_plan(user_prompt: &str, project_state: &Value) -> Result<Value, String> {
+    let locale = if user_prompt.to_ascii_lowercase().contains("english") {
+        "en-US"
+    } else {
+        "ar-EG"
+    };
+    prepare_film_plan_with_locale(user_prompt, project_state, locale)
+}
+
+pub fn prepare_film_plan_with_locale(
+    user_prompt: &str,
+    project_state: &Value,
+    deliverable_locale: &str,
+) -> Result<Value, String> {
     if user_prompt.trim().is_empty() || user_prompt.len() > 8000 {
         return Err("EMPTY_OR_OVERSIZED_FILM_BRIEF".to_owned());
     }
@@ -179,8 +223,33 @@ pub fn prepare_film_plan(user_prompt: &str, project_state: &Value) -> Result<Val
         "leaseId": id(),
         "userPrompt": user_prompt,
         "projectState": project_state,
-        "deliverableLocale": "ar-EG"
+        "deliverableLocale": deliverable_locale
     })))
+}
+
+pub fn critique_film_timeline(brief: &str, project_state: &Value) -> Result<Value, String> {
+    broker_request("/tron/film/critique", Some(json!({
+        "leaseId": id(),
+        "brief": brief,
+        "projectState": project_state
+    })))
+}
+
+/// Acquire a lease for another GemiTron product (e.g., `phototron`) on the shared workstation broker.
+pub fn acquire_peer_lease(lease_id: &str, product: &str, process_id: u32) -> Result<Value, String> {
+    broker_for_explicit_activation()?;
+    broker_request("/tron/acquire", Some(json!({
+        "leaseId": lease_id,
+        "origin": "local-ui",
+        "explicitConsent": true,
+        "product": product,
+        "processId": process_id
+    })))
+}
+
+/// Release a peer product lease on the shared workstation broker.
+pub fn release_peer_lease(lease_id: &str) -> Result<Value, String> {
+    broker_request("/tron/release", Some(json!({"leaseId": lease_id})))
 }
 
 #[cfg(test)]

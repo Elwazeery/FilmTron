@@ -45,3 +45,23 @@ This section **supersedes** the earlier "fixed AI tab" and unprofessional Gen Z 
 4. **Cloud:** FilmMCP GemiMCP registration/direct/federated tools and real ChatGPT -> workstation delegation remain external GMCP-010/013/014/015 and must not be falsely marked done. No production VPS changes in this wave.
 
 **Build/install handoff:** Reuse existing Windows workspace + Node `GemiTron88/GemiMCP`; start `node scripts/tron-workstation-host.mjs` only on deliberate local choice, then open FilmTron and use floating TRON ON. Broker requires owner-only local token and real reasoning-ready warmup. Current button does not auto-spawn the broker when it is absent; it reports a real failure. No trained custom model or paid API.
+
+## 2026-10-22 — FilmTron × TRON Complete Windows Implementation & Real Creative Video Acceptance
+
+This section records the completed Windows workstation implementation and end-to-end acceptance of FilmTron × TRON across `Elwazeery/FilmTron` and `GemiTron88/GemiMCP`:
+
+- **Shared Workstation Runtime (`GemiMCP` + `FilmTron`):**
+  - Passive launcher (`NOT_LOADED` on startup, zero auto-load, zero unapproved model downloads).
+  - Explicit ON initializes/connects to the shared `GemiMCP` workstation broker (`scripts/tron-workstation-host.mjs`), starts local `ollama.exe serve` (`127.0.0.1:11434`) on demand if needed, warms up `qwen3.5:4b-q4_K_M`, and verifies Thinking + residency before reporting `READY`.
+  - Bounded multi-application leases (`phototron` + `filmtron`): closing one application never unloads the other's active model or interrupts an active job; releasing the final lease unloads the model cleanly.
+- **Professional Egyptian Arabic Creative Director & Editorial Intelligence:**
+  - Conversational language is natural, professional Egyptian Arabic with zero street slang (`يا معلم`, `يا باشا`, `يا وحش`, `يا نجم`, `يا فنان`) and zero fabricated "WOW" scores.
+  - Final deliverable copy (titles, captions, graphics) follows the user's requested locale (`ar-EG` or `en-US`).
+  - Substantial briefs produce two genuinely distinct, selectable editorial directions (**Direction A: Cinematic Product Story** vs **Direction B: Fast Editorial Campaign**), both validated against `filmtron.tron.plan.v1` and `254,016,000,000` ticks/s exact rational frame boundaries.
+  - Translates all 7 subjective Arabic editor feedback notes (`الإيقاع بطيء في الأول`, `الدخلة ضعيفة`, `الانتقالات حادة`, `الصوت عالي على الفويس`, `الكابشن مش واضح`, `اللقطات مش راكبة على بعض`, `النهاية محتاجة قفلة أقوى`) into concrete frame-accurate native timeline operations.
+- **Complete Native Editing & Post-Execution QC Loop:**
+  - `crates/automation/src/tron.rs` normalizes semantic `film.*` parameters to canonical `Session` commands (`timeline.place`, `timeline.trim`, `sequence.applyVideoTransition`, `lumetri.applyPreset`, `effects.setParam`, `effects.setKeyframe`, `graphics.newText`, `captions.add`, `clip.audioGain`, `mixer.setValue`, `markers.add`) through `OutboundBridgeAdapter` with project/sequence/revision/workspace checks.
+  - `POST /tron/film/critique` inspects post-execution timeline continuity, audio headroom, and real Lumetri scopes (`scopes.read`) and proposes a bounded refinement plan (`<= 4` steps).
+  - Native floating/dockable TRON panel (`crates/ui-egui/src/tron_chat.rs`) supports Dark and Light themes, Arabic RTL text shaping (`crate::rtl::Lines`), Direction A/B switching, Preflight, Explicit Approval, Post-Execution QC, and Undo (`edit.undo`).
+- **End-to-End Windows Acceptance (`crates/ui-egui/tests/tron_creative_acceptance.rs`):**
+  - Verifies the mandatory 15-second (`1080×1920`, 30.00 fps, 450 frames) vertical commercial workflow from 4 distinct video clips and 1 stereo audio track, all 7 subjective Arabic feedback prompts, 2 unseen creative briefs, `.fcproj` save/reopen, decodable H.264/AAC `.mp4` export verified by `ffprobe` and native frame decode, and native DX12 `wgpu` Dark/Light screenshots (`08-tron-floating-dark-review.png`, `09-tron-docked-light-qc.png`).

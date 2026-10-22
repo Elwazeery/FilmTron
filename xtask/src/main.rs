@@ -106,6 +106,7 @@ const SAME_LAYER: &[(&str, &str)] = &[
     ("gpu", "render"),
     ("cli", "filmcraft"),
     ("tts", "tts-text"),
+    ("ui-egui", "automation"),
 ];
 
 /// Crates that must not appear below L5 (UI toolkits, windowing, OS audio/menus).

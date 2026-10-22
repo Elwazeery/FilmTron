@@ -1,0 +1,10 @@
+asset:        09-tron-docked-light-qc.png
+title:        FilmTron × TRON Docked Creative Director Panel with Post-Execution QC in Inferno Pixel Glass (Light) theme
+author:       FilmTron & FilmCraft contributors
+source:       original work (rendered natively via wgpu in crates/ui-egui/tests/tron_creative_acceptance.rs)
+license:      MIT OR Apache-2.0
+license-file: LICENSE-MIT
+added:        2026-10-22 by Elwazeery
+notes:        1600x980 native wgpu screenshot of FilmTron in Inferno Pixel Glass (Light) showing the right-docked TRON
+              Creative Director panel with native execution receipts, subjective Arabic feedback adjustments, and
+              post-execution timeline/audio/scopes QC. Procedural demo media only; no Adobe artwork.

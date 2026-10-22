@@ -1,0 +1,1010 @@
+{
+  "challenge1_mandatory15sCommercial": {
+    "brief": "اعمل إعلان احترافي مدته 15 ثانية من اللقطات دي، يبدأ بلقطة تخطف العين، يمشي بإيقاع سريع ومضبوط مع الصوت، يحط عنوان عربي شيك وكابشن واضح، ويقفل على لقطة قوية للمنتج.",
+    "directionA_preflight": "NATIVE_PREFLIGHT_PASSED_NOT_EXECUTED",
+    "directionB_preflight": "NATIVE_PREFLIGHT_PASSED_NOT_EXECUTED",
+    "editableProjectPath": "D:\\GemiTron\\TronCS\\FilmTron\\target/tron-acceptance\\tron_15s_commercial.fcproj",
+    "exportDurationMs": 28760,
+    "exportedMp4Bytes": 18596636,
+    "exportedMp4Path": "D:\\GemiTron\\TronCS\\FilmTron\\target/tron-acceptance\\tron_15s_commercial_1080x1920_30fps.mp4",
+    "exportedMp4Sha256": "95df33f91c5d54cc80a8d1a58cfca43e547ea3a5b97687dced592178965a8647",
+    "ffprobe": {
+      "audioCodec": "aac",
+      "durationSeconds": 15.018,
+      "height": 1920,
+      "nbFrames": "450",
+      "videoCodec": "h264",
+      "width": 1080
+    },
+    "fps": "30/1",
+    "initialExecutionReceipt": {
+      "appliedCount": 12,
+      "autoExported": false,
+      "mayHavePartialChanges": true,
+      "nativeExecution": {
+        "applied": true,
+        "nativeRevision": 41,
+        "preflight": {
+          "additionalApprovalCount": 0,
+          "applied": false,
+          "expectedRevision": 10,
+          "fps": {
+            "den": 1,
+            "num": 30
+          },
+          "projectId": "filmtron-local-37356-6410eb28c3912140",
+          "schema": "filmtron.tron.preflight.v1",
+          "sequenceId": 13,
+          "status": "PREPARED_NOT_EXECUTED",
+          "stepCount": 12,
+          "timebaseTicksPerSecond": 254016000000,
+          "writeCount": 12
+        },
+        "receipts": [
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_01_fast_hook",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                14
+              ],
+              "idempotentReplay": false,
+              "revision": 11
+            },
+            "revision": 11,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_02_rhythm_cut",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                15
+              ],
+              "idempotentReplay": false,
+              "revision": 12
+            },
+            "revision": 12,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_03_macro_pulse",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                16
+              ],
+              "idempotentReplay": false,
+              "revision": 13
+            },
+            "revision": 13,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_04_payoff_hero",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                17
+              ],
+              "idempotentReplay": false,
+              "revision": 14
+            },
+            "revision": 14,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_05_music_drive",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                18
+              ],
+              "idempotentReplay": false,
+              "revision": 15
+            },
+            "revision": 15,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_06_dynamic_zoom",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "idempotentReplay": false,
+              "keyframes": 0,
+              "revision": 16
+            },
+            "revision": 16,
+            "tool": "film.effects.set_param"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_07_punch_grade",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": 4,
+              "idempotentReplay": false,
+              "preset": "Hard Sun",
+              "revision": 17
+            },
+            "revision": 17,
+            "tool": "film.color.set_lumetri"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_08_bold_hook_title",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clip": 20,
+              "idempotentReplay": false,
+              "layer": 0,
+              "revision": 34
+            },
+            "revision": 34,
+            "tool": "film.titles.add_text"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_09_bold_cta_title",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clip": 22,
+              "idempotentReplay": false,
+              "layer": 0,
+              "revision": 36
+            },
+            "revision": 36,
+            "tool": "film.titles.add_text"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_10_fast_caption",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "caption": 25,
+              "idempotentReplay": false,
+              "revision": 39
+            },
+            "revision": 39,
+            "tool": "film.captions.add"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_11_audio_punch",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": 1,
+              "gainDb": [
+                {
+                  "clip": 18,
+                  "gainDb": -4.2
+                }
+              ],
+              "idempotentReplay": false,
+              "mode": "set",
+              "revision": 40
+            },
+            "revision": 40,
+            "tool": "film.audio.set_gain"
+          },
+          {
+            "callId": "tron:plan-dirB-1792675651627:dirB_12_beat_marker",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "idempotentReplay": false,
+              "marker": 26,
+              "revision": 41
+            },
+            "revision": 41,
+            "tool": "film.timeline.add_marker"
+          }
+        ],
+        "saveReopenExportNotImplicit": true,
+        "status": "EXECUTED_NATIVE_RECEIPTS",
+        "visualReviewRequired": true
+      },
+      "ok": true,
+      "projectId": "filmtron-local-37356-6410eb28c3912140",
+      "requiresActualPreviewAndAudioReview": true,
+      "revisionAfter": 41,
+      "sequenceIdAfter": 13,
+      "stepCount": 12
+    },
+    "postExecutionQc": {
+      "metricsSummary": {
+        "audioClipCount": 1,
+        "audioPeakDbfs": -24.15,
+        "audioRmsDbfs": -34.92,
+        "contrastStd": 0.161,
+        "meanLuma": 0.072,
+        "timelineDurationSeconds": 15,
+        "videoClipCount": 4
+      },
+      "noFabricatedScores": true,
+      "observedIssue": "متوسط مستوى الصوت (-34.9 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+      "observedIssues": [
+        {
+          "area": "Audio Presence (مستوى الصوت العام)",
+          "issue": "متوسط مستوى الصوت (-34.9 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+          "proposedFix": "رفع مستوى الصوت الرئيسي بمقدار +3.0 dB لزيادة الحضور السمعي."
+        },
+        {
+          "area": "Color & Luminance Scopes (التباين والإضاءة)",
+          "issue": "متوسط الإضاءة (7%) أو التباين اللوني يحتاج تعزيزًا لإبراز تفاصيل المنتج.",
+          "proposedFix": "تطبيق ضبط Lumetri لرفع التباين والإضاءة بشكل غير تدميري."
+        }
+      ],
+      "ok": true,
+      "refinementPlan": {
+        "expectedRevision": 41,
+        "fpsDen": 1,
+        "fpsNum": 30,
+        "planId": "plan-qc-1792675652472",
+        "product": "filmtron",
+        "projectId": "filmtron-local-37356-6410eb28c3912140",
+        "schema": "filmtron.tron.plan.v1",
+        "sequenceId": 13,
+        "steps": [
+          {
+            "id": "qc_refine_audio_boost",
+            "params": {
+              "db": 3,
+              "mode": "adjust"
+            },
+            "tool": "film.audio.set_gain"
+          },
+          {
+            "id": "qc_refine_lumetri",
+            "params": {
+              "contrast": 16,
+              "exposure": 0.18,
+              "name": "Cinema",
+              "saturation": 105
+            },
+            "tool": "film.color.set_lumetri"
+          }
+        ]
+      },
+      "reviewedActualAudio": true,
+      "reviewedActualFrames": true,
+      "summaryAr": "راجعت المعاينة الفعلية للتايملاين (4 كليب فيديو، 1 كليب صوت، المدة 15.00 ثانية). قراءات الـ Scopes الفعلية: متوسط الإضاءة 7%، التباين 16%، وذروة الصوت -24.1 dBFS. الملاحظة الفنية: متوسط مستوى الصوت (-34.9 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+      "userSummary": "راجعت المعاينة الفعلية للتايملاين (4 كليب فيديو، 1 كليب صوت، المدة 15.00 ثانية). قراءات الـ Scopes الفعلية: متوسط الإضاءة 7%، التباين 16%، وذروة الصوت -24.1 dBFS. الملاحظة الفنية: متوسط مستوى الصوت (-34.9 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا."
+    },
+    "resolution": "1080x1920",
+    "selectedDirection": {
+      "id": "direction_b",
+      "rationale": "دخلة فورية عالية الطاقة في أول ثانيتين مع قطعات سريعة متزامنة مع النبض الصوتي، تباين لوني حاد، وحركة زوم ديناميكية تنتهي بدعوة مباشرة لاتخاذ إجراء.",
+      "title": "الاتجاه الثاني: الإيقاع الإعلاني السريع (Fast Editorial Campaign)"
+    }
+  },
+  "challenge2_dynamicTechLaunch24fps": {
+    "brief": "Build a fast-paced 15-second tech launch montage with English titles: NEXT-GEN ENGINE",
+    "deliverableLocale": "en-US",
+    "executionReceipt": {
+      "appliedCount": 12,
+      "autoExported": false,
+      "mayHavePartialChanges": true,
+      "nativeExecution": {
+        "applied": true,
+        "nativeRevision": 116,
+        "preflight": {
+          "additionalApprovalCount": 0,
+          "applied": false,
+          "expectedRevision": 85,
+          "fps": {
+            "den": 1,
+            "num": 24
+          },
+          "projectId": "filmtron-local-37356-35a9325c250eb759",
+          "schema": "filmtron.tron.preflight.v1",
+          "sequenceId": 46,
+          "status": "PREPARED_NOT_EXECUTED",
+          "stepCount": 12,
+          "timebaseTicksPerSecond": 254016000000,
+          "writeCount": 12
+        },
+        "receipts": [
+          {
+            "callId": "tron:plan-1792675742409:dirB_01_fast_hook",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                47
+              ],
+              "idempotentReplay": false,
+              "revision": 86
+            },
+            "revision": 86,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_02_rhythm_cut",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                48
+              ],
+              "idempotentReplay": false,
+              "revision": 87
+            },
+            "revision": 87,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_03_macro_pulse",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                49
+              ],
+              "idempotentReplay": false,
+              "revision": 88
+            },
+            "revision": 88,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_04_payoff_hero",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                50
+              ],
+              "idempotentReplay": false,
+              "revision": 89
+            },
+            "revision": 89,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_05_music_drive",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                51
+              ],
+              "idempotentReplay": false,
+              "revision": 90
+            },
+            "revision": 90,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_06_dynamic_zoom",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "idempotentReplay": false,
+              "keyframes": 0,
+              "revision": 91
+            },
+            "revision": 91,
+            "tool": "film.effects.set_param"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_07_punch_grade",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": 4,
+              "idempotentReplay": false,
+              "preset": "Hard Sun",
+              "revision": 92
+            },
+            "revision": 92,
+            "tool": "film.color.set_lumetri"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_08_bold_hook_title",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clip": 53,
+              "idempotentReplay": false,
+              "layer": 0,
+              "revision": 109
+            },
+            "revision": 109,
+            "tool": "film.titles.add_text"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_09_bold_cta_title",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clip": 55,
+              "idempotentReplay": false,
+              "layer": 0,
+              "revision": 111
+            },
+            "revision": 111,
+            "tool": "film.titles.add_text"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_10_fast_caption",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "caption": 58,
+              "idempotentReplay": false,
+              "revision": 114
+            },
+            "revision": 114,
+            "tool": "film.captions.add"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_11_audio_punch",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": 1,
+              "gainDb": [
+                {
+                  "clip": 51,
+                  "gainDb": -4.2
+                }
+              ],
+              "idempotentReplay": false,
+              "mode": "set",
+              "revision": 115
+            },
+            "revision": 115,
+            "tool": "film.audio.set_gain"
+          },
+          {
+            "callId": "tron:plan-1792675742409:dirB_12_beat_marker",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "idempotentReplay": false,
+              "marker": 59,
+              "revision": 116
+            },
+            "revision": 116,
+            "tool": "film.timeline.add_marker"
+          }
+        ],
+        "saveReopenExportNotImplicit": true,
+        "status": "EXECUTED_NATIVE_RECEIPTS",
+        "visualReviewRequired": true
+      },
+      "ok": true,
+      "projectId": "filmtron-local-37356-35a9325c250eb759",
+      "requiresActualPreviewAndAudioReview": true,
+      "revisionAfter": 116,
+      "sequenceIdAfter": 46,
+      "stepCount": 12
+    },
+    "fps": "24/1",
+    "postExecutionQc": {
+      "metricsSummary": {
+        "audioClipCount": 1,
+        "audioPeakDbfs": -17.1,
+        "audioRmsDbfs": -27.28,
+        "contrastStd": 0.112,
+        "meanLuma": 0.033,
+        "timelineDurationSeconds": 15,
+        "videoClipCount": 4
+      },
+      "noFabricatedScores": true,
+      "observedIssue": "متوسط مستوى الصوت (-27.3 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+      "observedIssues": [
+        {
+          "area": "Audio Presence (مستوى الصوت العام)",
+          "issue": "متوسط مستوى الصوت (-27.3 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+          "proposedFix": "رفع مستوى الصوت الرئيسي بمقدار +3.0 dB لزيادة الحضور السمعي."
+        },
+        {
+          "area": "Color & Luminance Scopes (التباين والإضاءة)",
+          "issue": "متوسط الإضاءة (3%) أو التباين اللوني يحتاج تعزيزًا لإبراز تفاصيل المنتج.",
+          "proposedFix": "تطبيق ضبط Lumetri لرفع التباين والإضاءة بشكل غير تدميري."
+        }
+      ],
+      "ok": true,
+      "refinementPlan": {
+        "expectedRevision": 116,
+        "fpsDen": 1,
+        "fpsNum": 24,
+        "planId": "plan-qc-1792675742575",
+        "product": "filmtron",
+        "projectId": "filmtron-local-37356-35a9325c250eb759",
+        "schema": "filmtron.tron.plan.v1",
+        "sequenceId": 46,
+        "steps": [
+          {
+            "id": "qc_refine_audio_boost",
+            "params": {
+              "db": 3,
+              "mode": "adjust"
+            },
+            "tool": "film.audio.set_gain"
+          },
+          {
+            "id": "qc_refine_lumetri",
+            "params": {
+              "contrast": 16,
+              "exposure": 0.18,
+              "name": "Cinema",
+              "saturation": 105
+            },
+            "tool": "film.color.set_lumetri"
+          }
+        ]
+      },
+      "reviewedActualAudio": true,
+      "reviewedActualFrames": true,
+      "summaryAr": "راجعت المعاينة الفعلية للتايملاين (4 كليب فيديو، 1 كليب صوت، المدة 15.00 ثانية). قراءات الـ Scopes الفعلية: متوسط الإضاءة 3%، التباين 11%، وذروة الصوت -17.1 dBFS. الملاحظة الفنية: متوسط مستوى الصوت (-27.3 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+      "userSummary": "راجعت المعاينة الفعلية للتايملاين (4 كليب فيديو، 1 كليب صوت، المدة 15.00 ثانية). قراءات الـ Scopes الفعلية: متوسط الإضاءة 3%، التباين 11%، وذروة الصوت -17.1 dBFS. الملاحظة الفنية: متوسط مستوى الصوت (-27.3 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا."
+    },
+    "refinementReceipt": {
+      "appliedCount": 2,
+      "autoExported": false,
+      "mayHavePartialChanges": true,
+      "nativeExecution": {
+        "applied": true,
+        "nativeRevision": 118,
+        "preflight": {
+          "additionalApprovalCount": 0,
+          "applied": false,
+          "expectedRevision": 116,
+          "fps": {
+            "den": 1,
+            "num": 24
+          },
+          "projectId": "filmtron-local-37356-35a9325c250eb759",
+          "schema": "filmtron.tron.preflight.v1",
+          "sequenceId": 46,
+          "status": "PREPARED_NOT_EXECUTED",
+          "stepCount": 2,
+          "timebaseTicksPerSecond": 254016000000,
+          "writeCount": 2
+        },
+        "receipts": [
+          {
+            "callId": "tron:plan-1792675749039:fb_ripple_open_01:reg",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "delta": -201096000000,
+              "idempotentReplay": false,
+              "revision": 117
+            },
+            "revision": 117,
+            "tool": "film.timeline.trim"
+          },
+          {
+            "callId": "tron:plan-1792675749039:fb_marker_hook_02",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "idempotentReplay": false,
+              "marker": 60,
+              "revision": 118
+            },
+            "revision": 118,
+            "tool": "film.timeline.add_marker"
+          }
+        ],
+        "saveReopenExportNotImplicit": true,
+        "status": "EXECUTED_NATIVE_RECEIPTS",
+        "visualReviewRequired": true
+      },
+      "ok": true,
+      "projectId": "filmtron-local-37356-35a9325c250eb759",
+      "requiresActualPreviewAndAudioReview": true,
+      "revisionAfter": 118,
+      "sequenceIdAfter": 46,
+      "stepCount": 2
+    },
+    "selectedDirection": {
+      "id": "direction_b",
+      "rationale": "يتناسب مع طبيعة البريف السريع ويحقق جذبًا بصريًا فوريًا في أول ثانيتين مع إيقاع قطعات مشدود.",
+      "title": "الاتجاه الثاني: الإيقاع الإعلاني السريع (Fast Editorial Campaign)"
+    }
+  },
+  "challenge3_cinematicLifestyleStory25fps": {
+    "brief": "اعمل قصة براند لايف ستايل سينمائية هادئة ومؤثرة مدتها 15 ثانية بتركز على تفاصيل الإضاءة وتدرج لوني دافئ",
+    "deliverableLocale": "ar-EG",
+    "executionReceipt": {
+      "appliedCount": 12,
+      "autoExported": false,
+      "mayHavePartialChanges": true,
+      "nativeExecution": {
+        "applied": true,
+        "nativeRevision": 154,
+        "preflight": {
+          "additionalApprovalCount": 0,
+          "applied": false,
+          "expectedRevision": 119,
+          "fps": {
+            "den": 1,
+            "num": 25
+          },
+          "projectId": "filmtron-local-37356-35a9325c250eb759",
+          "schema": "filmtron.tron.preflight.v1",
+          "sequenceId": 67,
+          "status": "PREPARED_NOT_EXECUTED",
+          "stepCount": 12,
+          "timebaseTicksPerSecond": 254016000000,
+          "writeCount": 12
+        },
+        "receipts": [
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_01_shot_hook",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                68
+              ],
+              "idempotentReplay": false,
+              "revision": 120
+            },
+            "revision": 120,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_02_shot_detail",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                69
+              ],
+              "idempotentReplay": false,
+              "revision": 121
+            },
+            "revision": 121,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_03_shot_context",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                70
+              ],
+              "idempotentReplay": false,
+              "revision": 122
+            },
+            "revision": 122,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_04_shot_hero",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                71
+              ],
+              "idempotentReplay": false,
+              "revision": 123
+            },
+            "revision": 123,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_05_music_bed",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": [
+                72
+              ],
+              "idempotentReplay": false,
+              "revision": 124
+            },
+            "revision": 124,
+            "tool": "film.timeline.place_clip"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_06_dissolve_bridge",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "idempotentReplay": false,
+              "revision": 125,
+              "transition": 73
+            },
+            "revision": 125,
+            "tool": "film.transitions.apply"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_07_cinematic_grade",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": 4,
+              "idempotentReplay": false,
+              "preset": "Golden Dusk",
+              "revision": 126
+            },
+            "revision": 126,
+            "tool": "film.color.set_lumetri"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_08_title_hook",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clip": 75,
+              "idempotentReplay": false,
+              "layer": 0,
+              "revision": 147
+            },
+            "revision": 147,
+            "tool": "film.titles.add_text"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_09_title_cta",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clip": 77,
+              "idempotentReplay": false,
+              "layer": 0,
+              "revision": 149
+            },
+            "revision": 149,
+            "tool": "film.titles.add_text"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_10_caption_value",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "caption": 80,
+              "idempotentReplay": false,
+              "revision": 152
+            },
+            "revision": 152,
+            "tool": "film.captions.add"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_11_audio_polish",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": 1,
+              "gainDb": [
+                {
+                  "clip": 72,
+                  "gainDb": -7.5
+                }
+              ],
+              "idempotentReplay": false,
+              "mode": "set",
+              "revision": 153
+            },
+            "revision": 153,
+            "tool": "film.audio.set_gain"
+          },
+          {
+            "callId": "tron:plan-dirA-1792675761404:dirA_12_hero_marker",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "idempotentReplay": false,
+              "marker": 81,
+              "revision": 154
+            },
+            "revision": 154,
+            "tool": "film.timeline.add_marker"
+          }
+        ],
+        "saveReopenExportNotImplicit": true,
+        "status": "EXECUTED_NATIVE_RECEIPTS",
+        "visualReviewRequired": true
+      },
+      "ok": true,
+      "projectId": "filmtron-local-37356-35a9325c250eb759",
+      "requiresActualPreviewAndAudioReview": true,
+      "revisionAfter": 154,
+      "sequenceIdAfter": 67,
+      "stepCount": 12
+    },
+    "fps": "25/1",
+    "ntsc2997RationalPreflight": "NATIVE_PREFLIGHT_PASSED_NOT_EXECUTED",
+    "postExecutionQc": {
+      "metricsSummary": {
+        "audioClipCount": 1,
+        "audioPeakDbfs": -20.4,
+        "audioRmsDbfs": -30.49,
+        "contrastStd": 0.126,
+        "meanLuma": 0.055,
+        "timelineDurationSeconds": 15,
+        "videoClipCount": 4
+      },
+      "noFabricatedScores": true,
+      "observedIssue": "متوسط مستوى الصوت (-30.5 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+      "observedIssues": [
+        {
+          "area": "Audio Presence (مستوى الصوت العام)",
+          "issue": "متوسط مستوى الصوت (-30.5 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+          "proposedFix": "رفع مستوى الصوت الرئيسي بمقدار +3.0 dB لزيادة الحضور السمعي."
+        },
+        {
+          "area": "Color & Luminance Scopes (التباين والإضاءة)",
+          "issue": "متوسط الإضاءة (6%) أو التباين اللوني يحتاج تعزيزًا لإبراز تفاصيل المنتج.",
+          "proposedFix": "تطبيق ضبط Lumetri لرفع التباين والإضاءة بشكل غير تدميري."
+        }
+      ],
+      "ok": true,
+      "refinementPlan": {
+        "expectedRevision": 154,
+        "fpsDen": 1,
+        "fpsNum": 25,
+        "planId": "plan-qc-1792675761572",
+        "product": "filmtron",
+        "projectId": "filmtron-local-37356-35a9325c250eb759",
+        "schema": "filmtron.tron.plan.v1",
+        "sequenceId": 67,
+        "steps": [
+          {
+            "id": "qc_refine_audio_boost",
+            "params": {
+              "db": 3,
+              "mode": "adjust"
+            },
+            "tool": "film.audio.set_gain"
+          },
+          {
+            "id": "qc_refine_lumetri",
+            "params": {
+              "contrast": 16,
+              "exposure": 0.18,
+              "name": "Cinema",
+              "saturation": 105
+            },
+            "tool": "film.color.set_lumetri"
+          }
+        ]
+      },
+      "reviewedActualAudio": true,
+      "reviewedActualFrames": true,
+      "summaryAr": "راجعت المعاينة الفعلية للتايملاين (4 كليب فيديو، 1 كليب صوت، المدة 15.00 ثانية). قراءات الـ Scopes الفعلية: متوسط الإضاءة 6%، التباين 13%، وذروة الصوت -20.4 dBFS. الملاحظة الفنية: متوسط مستوى الصوت (-30.5 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا.",
+      "userSummary": "راجعت المعاينة الفعلية للتايملاين (4 كليب فيديو، 1 كليب صوت، المدة 15.00 ثانية). قراءات الـ Scopes الفعلية: متوسط الإضاءة 6%، التباين 13%، وذروة الصوت -20.4 dBFS. الملاحظة الفنية: متوسط مستوى الصوت (-30.5 dBFS RMS) منخفض ويحتاج رفعًا متوازنًا."
+    },
+    "refinementReceipt": {
+      "appliedCount": 2,
+      "autoExported": false,
+      "mayHavePartialChanges": true,
+      "nativeExecution": {
+        "applied": true,
+        "nativeRevision": 172,
+        "preflight": {
+          "additionalApprovalCount": 0,
+          "applied": false,
+          "expectedRevision": 154,
+          "fps": {
+            "den": 1,
+            "num": 25
+          },
+          "projectId": "filmtron-local-37356-35a9325c250eb759",
+          "schema": "filmtron.tron.preflight.v1",
+          "sequenceId": 67,
+          "status": "PREPARED_NOT_EXECUTED",
+          "stepCount": 2,
+          "timebaseTicksPerSecond": 254016000000,
+          "writeCount": 2
+        },
+        "receipts": [
+          {
+            "callId": "tron:plan-1792675768128:fb_color_unify_01",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "clips": 4,
+              "idempotentReplay": false,
+              "preset": "Teal Shadows, Warm Skin",
+              "revision": 155
+            },
+            "revision": 155,
+            "tool": "film.color.set_lumetri"
+          },
+          {
+            "callId": "tron:plan-1792675768128:fb_cohesion_trans_02",
+            "idempotentReplay": false,
+            "ok": true,
+            "result": {
+              "idempotentReplay": false,
+              "revision": 172,
+              "transition": 82
+            },
+            "revision": 172,
+            "tool": "film.transitions.apply"
+          }
+        ],
+        "saveReopenExportNotImplicit": true,
+        "status": "EXECUTED_NATIVE_RECEIPTS",
+        "visualReviewRequired": true
+      },
+      "ok": true,
+      "projectId": "filmtron-local-37356-35a9325c250eb759",
+      "requiresActualPreviewAndAudioReview": true,
+      "revisionAfter": 172,
+      "sequenceIdAfter": 67,
+      "stepCount": 2
+    },
+    "selectedDirection": {
+      "id": "direction_a",
+      "rationale": "افتتاحية بصرية هادئة تبني الفضول، تتبعها لقطات تفصيلية للمنتج بانتقالات ناعمة (Cross Dissolve) وتدريج لوني دافئ، وتنتهي بلقطة ختامية قوية مع رسالة واضحة.",
+      "title": "الاتجاه الأول: القصة السينمائية المتدرجة (Cinematic Product Story)"
+    }
+  },
+  "schema": "filmtron.tron.windows-acceptance.v1",
+  "sharedRuntimeCoexistence": {
+    "concurrentPhotoTronAndFilmTronLeases": 2,
+    "explicitOnState": "READY",
+    "passiveStartupState": "NOT_LOADED",
+    "stateAfterFilmTronReleaseWithPhotoTronActive": "READY",
+    "stateAfterFinalRelease": "NOT_LOADED",
+    "stateAfterPhotoTronReleaseWithFilmTronActive": "READY"
+  },
+  "verifiedAt": "2026-10-22",
+  "workstation": {
+    "gpu": "NVIDIA GeForce RTX 3050 6GB",
+    "model": "qwen3.5:4b-q4_K_M",
+    "modelDigest": "d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04",
+    "os": "Windows 11 x86_64",
+    "vramAfterUnloadMiB": [
+      610,
+      5393,
+      6144
+    ],
+    "vramBeforeMiB": [
+      610,
+      5393,
+      6144
+    ],
+    "vramDuringReadyMiB": [
+      4353,
+      1650,
+      6144
+    ],
+    "warmupMetrics": {
+      "evalCount": 209,
+      "gpuAfter": {
+        "available": true,
+        "freeMiB": 1650,
+        "name": "NVIDIA GeForce RTX 3050",
+        "sampledAt": "2026-10-22T13:26:48.433Z",
+        "totalMiB": 6144,
+        "usedMiB": 4353
+      },
+      "gpuBefore": {
+        "available": true,
+        "freeMiB": 5393,
+        "name": "NVIDIA GeForce RTX 3050",
+        "sampledAt": "2026-10-22T13:26:24.568Z",
+        "totalMiB": 6144,
+        "usedMiB": 610
+      },
+      "inferenceMs": 13607,
+      "loadDurationMs": 8318,
+      "showInspectMs": 10121,
+      "thinkingActive": true,
+      "tokensPerSec": 41.55,
+      "totalWarmupMs": 23878,
+      "verifiedAt": "2026-10-22T13:26:48.433Z",
+      "vramSizeBytes": 3140495604,
+      "warmupReply": "جاهز",
+      "warmupTotalMs": 23878
+    },
+    "wgpuBackend": "DX12"
+  }
+}

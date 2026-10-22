@@ -1,0 +1,10 @@
+asset:        08-tron-floating-dark-review.png
+title:        FilmTron × TRON Floating Creative Director Panel in Inferno Pixel Glass (Dark) theme
+author:       FilmTron & FilmCraft contributors
+source:       original work (rendered natively via wgpu in crates/ui-egui/tests/tron_creative_acceptance.rs)
+license:      MIT OR Apache-2.0
+license-file: LICENSE-MIT
+added:        2026-10-22 by Elwazeery
+notes:        1600x980 native wgpu screenshot of FilmTron in Inferno Pixel Glass (Dark) showing the floating TRON
+              Creative Director panel with Egyptian Arabic RTL reasoning, Direction A vs Direction B comparison,
+              and native preflight verification for the 15-second commercial workflow. Procedural demo media only.
