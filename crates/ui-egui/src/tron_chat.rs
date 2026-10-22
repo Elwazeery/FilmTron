@@ -325,7 +325,7 @@ pub fn show(ctx: &Context, project_state: Option<serde_json::Value>, session: &m
         });
     #[cfg(not(target_arch = "wasm32"))]
     if let Some(action) = requested_action {
-        broker_action(st, ctx.clone(), action);
+        broker_action(st.clone(), ctx.clone(), action);
     }
     #[cfg(not(target_arch = "wasm32"))]
     if let Some((prompt, project)) = requested_plan {
