@@ -355,6 +355,9 @@ impl OutboundBridgeAdapter {
         }
     }
 
+    /// Whether a trusted caller bound this adapter to authorized project roots.
+    pub fn has_workspace_root(&self) -> bool { self.workspace.is_some() }
+
     pub fn manifest(&self) -> &ProductManifest {
         &self.manifest
     }
