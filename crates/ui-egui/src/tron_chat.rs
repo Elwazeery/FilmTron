@@ -331,6 +331,7 @@ pub fn show(ctx: &Context, project_state: Option<serde_json::Value>, session: &m
     if let Some((prompt, project)) = requested_plan {
         dispatch_film_plan(view(ctx), ctx.clone(), prompt, project);
     }
+    #[cfg(not(target_arch = "wasm32"))]
     if let Some(approved) = native_action {
         if let Ok(mut g) = st.lock() {
             let reviewed = g.last_proposal.clone();
@@ -372,7 +373,7 @@ pub fn show(ctx: &Context, project_state: Option<serde_json::Value>, session: &m
         }
     }
     #[cfg(target_arch = "wasm32")]
-    let _ = (requested_action, requested_plan);
+    let _ = (requested_action, requested_plan, native_action, session);
     ctx.request_repaint_after(Duration::from_secs(2));
 }
 
