@@ -60,6 +60,7 @@ mod shuttle;
 pub mod source_playback;
 pub mod state;
 pub mod theme;
+pub mod tron_chat;
 mod theme_favorites;
 pub mod widgets;
 
@@ -2162,6 +2163,8 @@ impl eframe::App for FilmcraftApp {
     fn on_exit(&mut self) {
         // Flush the recovery journal and stop the auto-save worker; a session with nothing unsaved
         // removes its journal, one with unsaved changes keeps it for the next launch.
+        #[cfg(not(target_arch = "wasm32"))]
+        tron_chat::release_on_exit();
         self.session.shutdown();
     }
 
@@ -2184,6 +2187,7 @@ impl eframe::App for FilmcraftApp {
             // a broken notice must not take the session down: drop it
             self.graphics_notice = None;
         }
+        tron_chat::show(ui.ctx());
         let ctx = ui.ctx().clone();
         self.last_ui_time = ctx.input(|i| i.time);
         if !self.synthetic.is_empty() {
