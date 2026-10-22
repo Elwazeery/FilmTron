@@ -107,6 +107,35 @@ fn broker_request(route: &'static str, payload: Option<Value>) -> Result<Value, 
     Ok(result)
 }
 
+/// Only an explicit ON click can start the shared GemiMCP workstation
+/// broker. A passive status/launcher call must never spawn Node/Ollama.
+/// The script is resolved from an owner-selected GemiMCP source root.
+fn broker_for_explicit_activation() -> Result<(), String> {
+    if broker_request("/tron/status", None).is_ok() { return Ok(()); }
+    let root = std::env::var_os("GEMIMCP_ROOT")
+        .ok_or("GEMIMCP_ROOT_NOT_SET: select the local GemiMCP repository to enable TRON")?;
+    let script = PathBuf::from(root).join("scripts/tron-workstation-host.mjs");
+    if !script.is_file() { return Err("TRON_SHARED_HOST_SCRIPT_NOT_FOUND".to_owned()); }
+    let mut command = std::process::Command::new("node");
+    command.arg(script)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt as _;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    let _child = command.spawn().map_err(|e| format!("TRON_SHARED_BROKER_START_FAILED: {e}"))?;
+    // This runs in the UI background worker, never the rendering thread.
+    for _ in 0..40 {
+        if broker_request("/tron/status", None).is_ok() { return Ok(()); }
+        std::thread::sleep(Duration::from_millis(125));
+    }
+    Err("TRON_SHARED_BROKER_STARTUP_TIMEOUT".to_owned())
+}
+
 fn id() -> String { format!("filmtron-{}", std::process::id()) }
 
 /// Passive state queries NEVER reserve GPU memory.
@@ -116,6 +145,7 @@ pub fn status() -> Result<Value, String> {
 
 /// Called ONLY by the explicitly clicked local ON control.
 pub fn activate() -> Result<Value, String> {
+    broker_for_explicit_activation()?;
     broker_request("/tron/acquire", Some(json!({
         "leaseId": id(),
         "origin": "local-ui",
