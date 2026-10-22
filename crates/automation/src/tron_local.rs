@@ -66,7 +66,7 @@ fn decode_chunked(mut rest: &[u8]) -> Result<Vec<u8>, String> {
 }
 
 fn broker_request(route: &'static str, payload: Option<Value>) -> Result<Value, String> {
-    if !matches!(route, "/tron/status" | "/tron/acquire" | "/tron/release" | "/tron/heartbeat" | "/tron/minimize") {
+    if !matches!(route, "/tron/status" | "/tron/acquire" | "/tron/release" | "/tron/heartbeat" | "/tron/minimize" | "/tron/film/plan") {
         return Err("TRON_ROUTE_NOT_ALLOWED".to_owned());
     }
     let d = discover()?;
@@ -135,6 +135,21 @@ pub fn release() -> Result<Value, String> {
 
 pub fn minimize() -> Result<Value, String> {
     broker_request("/tron/minimize", Some(json!({"leaseId": id()})))
+}
+
+/** Ask the live shared model for a FILM-specific plan (never apply edits).
+ * The native UI must acquire an explicit filmtron lease first.
+ */
+pub fn prepare_film_plan(user_prompt: &str, project_state: &Value) -> Result<Value, String> {
+    if user_prompt.trim().is_empty() || user_prompt.len() > 8000 {
+        return Err("EMPTY_OR_OVERSIZED_FILM_BRIEF".to_owned());
+    }
+    broker_request("/tron/film/plan", Some(json!({
+        "leaseId": id(),
+        "userPrompt": user_prompt,
+        "projectState": project_state,
+        "deliverableLocale": "ar-EG"
+    })))
 }
 
 #[cfg(test)]
