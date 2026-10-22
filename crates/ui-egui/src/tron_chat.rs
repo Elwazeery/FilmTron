@@ -23,6 +23,10 @@ struct ViewState {
     error: Option<String>,
     input: String,
     last_proposal: Option<serde_json::Value>,
+    reviewed_plan_id: Option<String>,
+    reviewed_revision: Option<u64>,
+    native_review: Option<serde_json::Value>,
+    native_receipt: Option<serde_json::Value>,
     last_status_poll: Instant,
 }
 
@@ -41,6 +45,10 @@ impl Default for ViewState {
             error: None,
             input: String::new(),
             last_proposal: None,
+            reviewed_plan_id: None,
+            reviewed_revision: None,
+            native_review: None,
+            native_receipt: None,
             last_status_poll: Instant::now(),
         }
     }
@@ -127,6 +135,10 @@ fn dispatch_film_plan(st: Arc<Mutex<ViewState>>, ctx: Context, prompt: String, p
         g.working = true;
         g.error = None;
         g.last_proposal = None;
+        g.reviewed_plan_id = None;
+        g.reviewed_revision = None;
+        g.native_review = None;
+        g.native_receipt = None;
     } else { return; }
     std::thread::spawn(move || {
         let result = filmcraft_automation::tron_local::prepare_film_plan(&prompt, &project);
@@ -151,7 +163,7 @@ fn dispatch_film_plan(st: Arc<Mutex<ViewState>>, ctx: Context, prompt: String, p
 
 /// Passive launcher + native overlay. Does not modify FilmcraftApp playback,
 /// audio, media or timeline UI state.
-pub fn show(ctx: &Context, project_state: Option<serde_json::Value>) {
+pub fn show(ctx: &Context, project_state: Option<serde_json::Value>, session: &mut filmcraft_engine::Session) {
     let st = view(ctx);
     let is_open = st.lock().map(|g| g.open).unwrap_or(false);
     if !is_open {
@@ -185,6 +197,7 @@ pub fn show(ctx: &Context, project_state: Option<serde_json::Value>) {
     let x = (area.right() - 470.0).max(area.left() + 8.0);
     let mut requested_action: Option<&'static str> = None;
     let mut requested_plan: Option<(String, serde_json::Value)> = None;
+    let mut native_action: Option<bool> = None;
     egui::Window::new("TRON · Film Creative Director")
         .id(Id::new("filmtron.tron.window"))
         .order(Order::Foreground)
@@ -252,17 +265,48 @@ pub fn show(ctx: &Context, project_state: Option<serde_json::Value>) {
                     ui.strong("جاهز نبني مونتاج له فكرة وإيقاع واضح.");
                     ui.label("TRON بيستخدم نفس الموديل المشترك مع PhotoTron؛ لازم أحافظ على توقيت الفريمات، حقوق الأصول، والصوت، وأرجع معاينة من التايملاين الحقيقي.");
                     ui.add_space(8.0);
-                    ui.weak("تنفيذ خطط المونتاج من الشات قيد التوصيل؛ زر التحميل شغال على الـShared Runtime، لكن إرسال أوامر AI مش متاح قبل ربط Native Planner.");
+                    ui.weak("هنختار اتجاه فني، نراجع الأوامر والمقاطع الفعلية، وبعد موافقتك الصريحة ننفذ التعديلات على الـTimeline. التصدير والاستيراد محتاجين موافقة منفصلة.");
                 });
-                if let Some(last) = &g.last_proposal {
+                if let Some(last) = g.last_proposal.clone() {
                     ui.separator();
-                    let v = last.get("result").unwrap_or(last);
+                    let v = last.get("result").unwrap_or(&last);
                     ui.strong("الخطة المقترحة — لم تُنفّذ على الـTimeline");
                     ui.label(v.get("userExplanation").and_then(serde_json::Value::as_str).unwrap_or("لا يوجد شرح بعد"));
                     ui.label(format!("Status: {}", v.get("status").and_then(serde_json::Value::as_str).unwrap_or("UNKNOWN")));
                     if let Some(steps) = v.get("plan").and_then(|x| x.get("steps")).and_then(serde_json::Value::as_array) {
-                        ui.weak(format!("{} native steps require scoped preflight and user approval", steps.len()));
+                        ui.weak(format!("{} خطوات Native مقترحة — مفيش تنفيذ قبل الموافقة", steps.len()));
+                        for step in steps.iter().take(12) {
+                            let name = step.get("tool").and_then(serde_json::Value::as_str).unwrap_or("unknown");
+                            let id = step.get("id").and_then(serde_json::Value::as_str).unwrap_or("?");
+                            ui.small(format!("{} · {}", id, name));
+                            // Real preview is required after native execution;
+                            // listing step IDs is an execution diff, not visual proof.
+                        }
                     }
+                    if g.power_on && !g.working && v.get("plan").is_some() {
+                        if ui.button("1 · افحص الخطة والصلاحيات").clicked() {
+                            native_action = Some(false);
+                        }
+                        if let Some(check) = &g.native_review {
+                            ui.colored_label(Color32::from_rgb(104, 203, 152),
+                                "Native preflight passed · محتاج موافقة قبل التنفيذ");
+                            ui.small(format!("Revision: {} · Steps: {}",
+                                check.get("expectedRevision").and_then(serde_json::Value::as_u64).unwrap_or(0),
+                                check.get("stepCount").and_then(serde_json::Value::as_u64).unwrap_or(0)));
+                            if ui.button("2 · أوافق على تطبيق الخطوات على الـTimeline").clicked() {
+                                native_action = Some(true);
+                            }
+                        }
+                    }
+                }
+                if let Some(receipt) = &g.native_receipt {
+                    ui.separator();
+                    ui.strong("النتيجة الفعلية من المحرك");
+                    let execution = &receipt["nativeExecution"];
+                    ui.label(execution["status"].as_str().unwrap_or("UNKNOWN"));
+                    ui.weak(format!("Native revision: {}",
+                        receipt.get("revisionAfter").and_then(serde_json::Value::as_u64).unwrap_or(0)));
+                    ui.small("راجع الـProgram Monitor والصوت، واحفظ/صدّر من أدوات FilmTron المعتادة.");
                 }
                 ui.separator();
                 let can_plan = g.power_on && !g.working && project_state.is_some();
@@ -286,6 +330,46 @@ pub fn show(ctx: &Context, project_state: Option<serde_json::Value>) {
     #[cfg(not(target_arch = "wasm32"))]
     if let Some((prompt, project)) = requested_plan {
         dispatch_film_plan(view(ctx), ctx.clone(), prompt, project);
+    }
+    if let Some(approved) = native_action {
+        if let Ok(mut g) = st.lock() {
+            let reviewed = g.last_proposal.clone();
+            let result = match reviewed {
+                Some(proposal) if g.power_on && !g.working => {
+                    if approved {
+                        match (g.reviewed_plan_id.clone(), g.reviewed_revision) {
+                            (Some(plan_id), Some(revision)) =>
+                                crate::tron_actions::apply(session, &proposal, &plan_id, revision),
+                            _ => Err("FILM_PLAN_NOT_REVIEWED".into())
+                        }
+                    } else {
+                        crate::tron_actions::review(session, &proposal)
+                    }
+                }
+                _ => Err("FILM_LOCAL_AI_NOT_READY_OR_NO_PROPOSAL".into())
+            };
+            match result {
+                Ok(receipt) if approved => {
+                    g.native_receipt = Some(receipt);
+                    g.native_review = None; // never replay same approval
+                    g.reviewed_plan_id = None;
+                    g.reviewed_revision = None;
+                    g.error = None;
+                }
+                Ok(check) => {
+                    g.reviewed_plan_id = check.get("planId").and_then(serde_json::Value::as_str).map(str::to_owned);
+                    g.reviewed_revision = check.get("expectedRevision").and_then(serde_json::Value::as_u64);
+                    g.native_review = Some(check);
+                    g.error = None;
+                }
+                Err(err) => {
+                    g.error = Some(err);
+                    g.native_review = None;
+                    g.reviewed_plan_id = None;
+                    g.reviewed_revision = None;
+                }
+            }
+        }
     }
     #[cfg(target_arch = "wasm32")]
     let _ = (requested_action, requested_plan);
