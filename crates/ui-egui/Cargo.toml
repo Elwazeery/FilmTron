@@ -55,7 +55,6 @@ filmcraft-codecs = { workspace = true }
 # itself stays OS-independent and web-portable)
 filmcraft-platform = { workspace = true }
 filmcraft-interchange = { workspace = true }
-filmcraft-automation = { workspace = true }
 filmcraft-format = { workspace = true }
 egui_kittest = { workspace = true, features = ["eframe", "wgpu"] }
 
