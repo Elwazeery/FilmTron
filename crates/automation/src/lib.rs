@@ -15,6 +15,8 @@ pub mod gemiguard;
 pub mod gemimcp;
 pub mod long_job;
 pub mod security;
+pub mod tron;
+pub mod tron_local;
 pub mod server;
 
 pub use bridge::BridgeClient;
