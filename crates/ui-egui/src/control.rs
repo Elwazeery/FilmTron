@@ -167,6 +167,7 @@ pub fn handle(app: &mut FilmcraftApp, ctx: &egui::Context, req: &ControlRequest)
             Err(e) => err(e),
         },
         "ui.menu.list" => ok(serde_json::to_value(crate::menus::menu_items(app)).unwrap_or_default()),
+        "doc.identity" => ok(project_identity(app.session.path.as_deref(), app.session.revision, app.session.saved_revision)),
         "ui.inspect" => ok(inspect(app, ctx)),
         "perf.stats" => ok(crate::perf::stats(app)),
         "ui.elements" => {
@@ -539,6 +540,20 @@ fn merge(v: &mut Value, patch: &Value) {
         }
         (v, p) => *v = p.clone(),
     }
+}
+
+/// A single project-owned read-only identity response for TronCS. The path is
+/// the session's genuine last-opened/saved project file, not the active sequence.
+/// No filesystem access, project mutation or identity attestation occurs here.
+fn project_identity(path: Option<&str>, revision: u64, saved_revision: u64) -> Value {
+    json!({
+        "product": "filmtron",
+        "path": path.filter(|p| !p.is_empty()),
+        "revision": revision,
+        "savedRevision": saved_revision,
+        "dirty": revision != saved_revision,
+        "scope": "active_project",
+    })
 }
 
 pub fn inspect(app: &FilmcraftApp, ctx: &egui::Context) -> Value {
