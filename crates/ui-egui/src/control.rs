@@ -693,6 +693,20 @@ pub fn encode_png(rgba: &[u8], w: u32, h: u32) -> Result<Vec<u8>, String> {
 #[cfg(test)]
 mod base64_tests {
     #[test]
+    fn troncs_project_identity_is_nonmutating_and_requires_saved_path() {
+        let none = super::project_identity(None, 8, 8);
+        assert_eq!(none["product"], "filmtron");
+        assert!(none["path"].is_null());
+        assert_eq!(none["revision"], 8);
+        assert_eq!(none["dirty"], false);
+        let dirty = super::project_identity(Some("C:/Creative/Cut.fcproj"), 9, 8);
+        assert_eq!(dirty["path"], "C:/Creative/Cut.fcproj");
+        assert_eq!(dirty["revision"], 9);
+        assert_eq!(dirty["savedRevision"], 8);
+        assert_eq!(dirty["dirty"], true);
+    }
+
+    #[test]
     fn rfc4648_vectors() {
         for (i, o) in [("", ""), ("f", "Zg=="), ("fo", "Zm8="), ("foo", "Zm9v"), ("foob", "Zm9vYg=="), ("fooba", "Zm9vYmE="), ("foobar", "Zm9vYmFy")] {
             assert_eq!(super::base64(i.as_bytes()), o);
