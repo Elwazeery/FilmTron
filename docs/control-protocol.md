@@ -13,13 +13,22 @@ nothing sent after it on that connection runs. That covers text that isn't JSON,
 an object without `method`, invalid UTF-8, and a line longer than 4 MiB. An HTTP request (for example a
 web page's cross-origin `fetch` to `127.0.0.1:<port>`) therefore can't smuggle a command in its body:
 its request line is rejected first. At most 16 connections are served at once; further ones get an error
-line and are closed. Clients that get an error reply should reconnect. The port has no authentication,
-so only enable it while you use it. Transport: `apps/filmcraft/src/control_server.rs`.
+line and are closed. Clients that get an error reply should reconnect. Current control-server source requires a per-launch bearer token as the first `auth` request, before it executes any UI/engine command. Only enable the loopback port when needed; never publish it or pass the token to another product. Transport: `apps/filmcraft/src/control_server.rs`.
 
 ```json
 {"id": 1, "method": "engine.execute", "params": {"command": "sequence.addEdit", "params": {"seconds": 3}}}
 {"id": 1, "ok": true, "result": {"cuts": 2}}
 ```
+
+### TronCS project identity (read-only)
+
+A running, authenticated FilmTron UI provides `doc.identity` with empty `params`:
+
+```json
+{"id":"troncs-identity","method":"doc.identity","params":{}}
+```
+
+The result has `product: "filmtron"`, `scope: "active_project"`, `path: string | null`, `revision: u64`, `savedRevision: u64`, and `dirty: boolean`. Values come directly from `FilmcraftApp.session.path/revision/saved_revision` and do not mutate, open or save the project. `path: null` means no saved file to bind. This API does not attest executable/process identity, grant workspace access or demonstrate Premiere PRPROJ compatibility. TronCS compares actual selected file identity/revision separately and refuses untrusted paths.
 
 Methods (handlers in `crates/ui-egui/src/control.rs`):
 
