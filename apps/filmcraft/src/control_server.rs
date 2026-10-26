@@ -6,16 +6,14 @@
 //! bounded ([`MAX_LINE`]) and so is the number of open connections ([`MAX_CONNECTIONS`]); junk
 //! never reaches the UI thread. See `docs/control-protocol.md`.
 
-use std::collections::hash_map::RandomState;
-use std::fs::OpenOptions;
-use std::hash::{BuildHasher, Hasher};
+use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant};
 
 use filmcraft_ui_egui::ControlRequest;
 use serde_json::{Value, json};
@@ -33,26 +31,88 @@ pub const AUTH_DEADLINE: Duration = Duration::from_secs(10);
 pub const IO_TIMEOUT: Duration = Duration::from_secs(30);
 
 const TOKEN_HEX_LEN: usize = 64;
-static TOKEN_NONCE: AtomicU64 = AtomicU64::new(1);
+
+#[cfg(unix)]
+fn fill_os_csprng_bytes(dest: &mut [u8]) -> std::io::Result<()> {
+    let mut urandom = File::open("/dev/urandom")?;
+    urandom.read_exact(dest)
+}
+
+#[cfg(windows)]
+fn fill_os_csprng_bytes(dest: &mut [u8]) -> std::io::Result<()> {
+    #[link(name = "advapi32")]
+    unsafe extern "system" {
+        fn SystemFunction036(random_buffer: *mut u8, random_buffer_length: u32) -> u8;
+    }
+    let len = u32::try_from(dest.len()).map_err(|_| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "CSPRNG buffer length exceeds u32")
+    })?;
+    let ok = unsafe { SystemFunction036(dest.as_mut_ptr(), len) };
+    if ok == 0 {
+        return Err(std::io::Error::other("SystemFunction036 failed to generate CSPRNG bytes"));
+    }
+    Ok(())
+}
 
 pub fn generate_control_token() -> String {
     const HEX: &[u8; 16] = b"0123456789abcdef";
-    let seq = TOKEN_NONCE.fetch_add(1, Ordering::Relaxed);
-    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
+    let mut bytes = [0u8; 32];
+    fill_os_csprng_bytes(&mut bytes).expect("OS CSPRNG (/dev/urandom or SystemFunction036) must be available");
     let mut out = String::with_capacity(TOKEN_HEX_LEN);
-    for i in 0..4u64 {
-        let rs = RandomState::new();
-        let mut h = rs.build_hasher();
-        h.write_u64(seq.wrapping_add(i));
-        h.write_u128(nanos);
-        h.write_u32(std::process::id());
-        let word = h.finish();
-        for b in word.to_le_bytes() {
-            out.push(HEX[(b >> 4) as usize] as char);
-            out.push(HEX[(b & 0x0f) as usize] as char);
-        }
+    for b in bytes {
+        out.push(HEX[(b >> 4) as usize] as char);
+        out.push(HEX[(b & 0x0f) as usize] as char);
     }
     out
+}
+
+pub fn verify_token_file_permissions(path: &Path) -> Result<(), String> {
+    let meta = std::fs::metadata(path).map_err(|e| format!("{}: {e}", path.display()))?;
+    if !meta.is_file() {
+        return Err(format!("{}: control token file is not a regular file", path.display()));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if meta.mode() & 0o077 != 0 {
+            return Err(format!(
+                "{}: control token file is readable by group or others (mode {:o}); restrict it to its owner (chmod 600)",
+                path.display(),
+                meta.mode() & 0o777
+            ));
+        }
+    }
+    #[cfg(windows)]
+    {
+        let nonce = generate_control_token();
+        let acl_path = std::env::temp_dir().join(format!("filmtron-acl-{}-{nonce}.sddl", std::process::id()));
+        let output = std::process::Command::new("icacls")
+            .arg(path)
+            .arg("/save")
+            .arg(&acl_path)
+            .arg("/q")
+            .output()
+            .map_err(|e| format!("{}: cannot inspect token file ACL: {e}", path.display()))?;
+        let bytes = std::fs::read(&acl_path).unwrap_or_default();
+        let _ = std::fs::remove_file(&acl_path);
+        if !output.status.success() || bytes.is_empty() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("{}: cannot verify token file ACL: {}", path.display(), stderr.trim()));
+        }
+        let units: Vec<u16> = bytes.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
+        let sddl = String::from_utf16_lossy(&units);
+        for ace in sddl.split('(').filter(|part| part.starts_with("A;")) {
+            for forbidden in [";WD)", ";BU)", ";AU)", ";BG)", ";AN)"] {
+                if ace.contains(forbidden) {
+                    return Err(format!(
+                        "{}: control token file is readable by other local principals ({forbidden}); restrict it to its owner",
+                        path.display()
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 pub fn token_matches(expected: &str, supplied: &str) -> bool {
@@ -115,7 +175,9 @@ fn resolve_server_token(port: u16) -> String {
         .or_else(|| std::env::var_os("FILMCRAFT_CONTROL_TOKEN_FILE"))
         .map(PathBuf::from)
     {
-        if let Ok(existing) = std::fs::read_to_string(&file_path) {
+        if verify_token_file_permissions(&file_path).is_ok()
+            && let Ok(existing) = std::fs::read_to_string(&file_path)
+        {
             let trimmed = existing.trim().to_ascii_lowercase();
             if trimmed.len() == TOKEN_HEX_LEN && trimmed.bytes().all(|b| b.is_ascii_hexdigit()) {
                 let _ = write_owner_only_token_file(&default_port_token_file(port), &trimmed);
@@ -516,5 +578,26 @@ mod tests {
         assert_eq!(replies[0]["result"]["authenticated"], true);
         assert_eq!(replies[1]["result"]["seen"], true);
         assert_eq!(replies[2]["error"], "already authenticated");
+    }
+
+    #[test]
+    fn csprng_token_and_owner_only_permissions_are_enforced() {
+        let t1 = generate_control_token();
+        let t2 = generate_control_token();
+        assert_eq!(t1.len(), TOKEN_HEX_LEN);
+        assert_eq!(t2.len(), TOKEN_HEX_LEN);
+        assert_ne!(t1, t2);
+        assert!(t1.bytes().all(|b| b.is_ascii_hexdigit()));
+
+        let path = std::env::temp_dir().join(format!("filmtron-test-{}.token", &t1[..16]));
+        write_owner_only_token_file(&path, &t1).unwrap();
+        assert_eq!(verify_token_file_permissions(&path), Ok(()));
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+            assert!(verify_token_file_permissions(&path).is_err());
+        }
+        let _ = std::fs::remove_file(&path);
     }
 }
