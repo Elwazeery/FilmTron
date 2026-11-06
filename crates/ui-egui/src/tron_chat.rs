@@ -10,10 +10,11 @@ use std::time::{Duration, Instant};
 
 use egui::{Align2, Color32, Context, FontId, Frame, Id, Margin, Order, RichText, ScrollArea, Stroke, vec2};
 use filmcraft_automation::antigravity_brain::{
-    AntigravityAuthMode, AntigravityDirectOutcome, AntigravityDirectRequest,
-    AntigravityEffortLevel, AntigravityFleetNodeId, AntigravityModelId, AntigravityVibePreset,
-    FleetNodeLiveStatus, STUDIO_CONTROL_HUB_FLEET_URL, default_fleet_address_map,
-    direct_with_antigravity_brain, probe_fleet_node_live_status,
+    AGY_REMOTE_AGENT_RELAY_URL, AntigravityAuthMode, AntigravityDirectOutcome,
+    AntigravityDirectRequest, AntigravityEffortLevel, AntigravityExecutionScope,
+    AntigravityFleetNodeId, AntigravityModelId, AntigravityVibePreset, FleetNodeLiveStatus,
+    STUDIO_CONTROL_HUB_FLEET_URL, default_fleet_address_map, direct_with_antigravity_brain,
+    probe_fleet_node_live_status,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -47,6 +48,7 @@ struct ViewState {
     last_critique: Option<serde_json::Value>,
     last_status_poll: Instant,
     // ✦ AGY AI state
+    pub agy_execution_scope: AntigravityExecutionScope,
     agy_preset: AntigravityVibePreset,
     agy_model: AntigravityModelId,
     agy_effort: AntigravityEffortLevel,
@@ -84,6 +86,7 @@ impl Default for ViewState {
             native_receipt: None,
             last_critique: None,
             last_status_poll: Instant::now(),
+            agy_execution_scope: AntigravityExecutionScope::DeviceFleet,
             agy_preset: default_preset,
             agy_model: AntigravityModelId::Gemini31Pro,
             agy_effort: AntigravityEffortLevel::High,
@@ -355,7 +358,7 @@ fn render_agy_brain_contents(
 ) {
     let agy_accent = Color32::from_rgb(168, 85, 247);
 
-    // 1. 5 Fleet Node Pills + Collapsible 4-Device IP Config & Live Ping
+    // 1. Execution Scope Toggle + 5 Fleet Node Pills + Collapsible 4-Device IP Config & Live Ping
     Frame::NONE
         .fill(card_fill)
         .stroke(Stroke::new(1.0, card_stroke))
@@ -364,63 +367,104 @@ fn render_agy_brain_contents(
         .show(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.label(
-                    RichText::new("✦ AGY Fleet Node:")
+                    RichText::new("Execution Scope:")
                         .strong()
                         .color(text_primary)
                         .size(12.0),
                 );
-                for node in AntigravityFleetNodeId::ALL {
-                    let selected = g.agy_fleet_node == node;
-                    if paint_bidi_button(ui, node.pill_label(), true, selected, agy_accent) {
-                        g.agy_fleet_node = node;
-                    }
+                let is_device = g.agy_execution_scope == AntigravityExecutionScope::DeviceFleet;
+                if paint_bidi_button(
+                    ui,
+                    "🖥️ Device Agent (Fleet IPs)",
+                    true,
+                    is_device,
+                    agy_accent,
+                ) {
+                    g.agy_execution_scope = AntigravityExecutionScope::DeviceFleet;
+                }
+                let is_remote =
+                    g.agy_execution_scope == AntigravityExecutionScope::AccountRemoteAgent;
+                if paint_bidi_button(
+                    ui,
+                    "🌐 Remote Agent (Account-Bound)",
+                    true,
+                    is_remote,
+                    agy_accent,
+                ) {
+                    g.agy_execution_scope = AntigravityExecutionScope::AccountRemoteAgent;
                 }
             });
 
-            ui.add_space(4.0);
-            ui.collapsing("Configure 4-Device IPs & Live Ping", |ui| {
-                for node in AntigravityFleetNodeId::CONCRETE_NODES {
-                    let mut addr = g
-                        .agy_fleet_addresses
-                        .get(&node)
-                        .cloned()
-                        .unwrap_or_default();
-                    ui.horizontal(|ui| {
-                        ui.label(
-                            RichText::new(node.pill_label())
-                                .color(text_primary)
-                                .size(11.5),
-                        );
-                        if ui
-                            .add(egui::TextEdit::singleline(&mut addr).desired_width(155.0))
-                            .changed()
-                        {
-                            g.agy_fleet_addresses.insert(node, addr.clone());
-                        }
-                        if ui.small_button("Ping").clicked() {
-                            let status = probe_fleet_node_live_status(node, &addr);
-                            g.agy_fleet_statuses.insert(node, status);
-                        }
-                        if let Some(st) = g.agy_fleet_statuses.get(&node) {
-                            ui.colored_label(
-                                if st.online {
-                                    Color32::from_rgb(52, 211, 153)
-                                } else {
-                                    Color32::from_rgb(239, 68, 68)
-                                },
-                                &st.status_label,
-                            );
-                        }
-                    });
-                }
-                ui.add_space(2.0);
-                ui.small(
-                    RichText::new(format!(
-                        "Studio Owner Control Hub: {STUDIO_CONTROL_HUB_FLEET_URL}"
-                    ))
-                    .color(text_secondary),
+            if g.agy_execution_scope == AntigravityExecutionScope::AccountRemoteAgent {
+                ui.add_space(4.0);
+                ui.colored_label(
+                    Color32::from_rgb(52, 211, 153),
+                    format!(
+                        "🌐 Antigravity Remote Agent · GemiAccess -> {AGY_REMOTE_AGENT_RELAY_URL} · Zero IP Config"
+                    ),
                 );
-            });
+            } else {
+                ui.add_space(4.0);
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(
+                        RichText::new("✦ AGY Fleet Node:")
+                            .strong()
+                            .color(text_primary)
+                            .size(12.0),
+                    );
+                    for node in AntigravityFleetNodeId::ALL {
+                        let selected = g.agy_fleet_node == node;
+                        if paint_bidi_button(ui, node.pill_label(), true, selected, agy_accent) {
+                            g.agy_fleet_node = node;
+                        }
+                    }
+                });
+
+                ui.add_space(4.0);
+                ui.collapsing("Configure 4-Device IPs & Live Ping", |ui| {
+                    for node in AntigravityFleetNodeId::CONCRETE_NODES {
+                        let mut addr = g
+                            .agy_fleet_addresses
+                            .get(&node)
+                            .cloned()
+                            .unwrap_or_default();
+                        ui.horizontal(|ui| {
+                            ui.label(
+                                RichText::new(node.pill_label())
+                                    .color(text_primary)
+                                    .size(11.5),
+                            );
+                            if ui
+                                .add(egui::TextEdit::singleline(&mut addr).desired_width(155.0))
+                                .changed()
+                            {
+                                g.agy_fleet_addresses.insert(node, addr.clone());
+                            }
+                            if ui.small_button("Ping").clicked() {
+                                let status = probe_fleet_node_live_status(node, &addr);
+                                g.agy_fleet_statuses.insert(node, status);
+                            }
+                            if let Some(st) = g.agy_fleet_statuses.get(&node) {
+                                ui.colored_label(
+                                    if st.online {
+                                        Color32::from_rgb(52, 211, 153)
+                                    } else {
+                                        Color32::from_rgb(239, 68, 68)
+                                    },
+                                    &st.status_label,
+                                );
+                            }
+                        });
+                    }
+                    ui.add_space(2.0);
+                    ui.small(
+                        RichText::new(format!(
+                            "Studio Owner Control Hub: {STUDIO_CONTROL_HUB_FLEET_URL}"
+                        ))
+                        .color(text_secondary),
+                    );
+                });
+            }
         });
 
     if let Some(err) = &g.error {
@@ -1160,6 +1204,7 @@ pub fn show(
                         model: g.agy_model,
                         effort: g.agy_effort,
                         auth_mode: g.agy_auth_mode,
+                        execution_scope: g.agy_execution_scope,
                         fleet_node: g.agy_fleet_node,
                         custom_fleet_addresses: g.agy_fleet_addresses.clone(),
                     };

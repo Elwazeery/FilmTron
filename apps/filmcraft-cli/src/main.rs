@@ -496,8 +496,8 @@ async fn cli() {
         "antigravity-direct" => {
             use filmcraft_automation::antigravity_brain::{
                 AntigravityAuthMode, AntigravityDirectRequest, AntigravityEffortLevel,
-                AntigravityFleetNodeId, AntigravityModelId, AntigravityVibePreset,
-                default_fleet_address_map, direct_with_antigravity_brain,
+                AntigravityExecutionScope, AntigravityFleetNodeId, AntigravityModelId,
+                AntigravityVibePreset, default_fleet_address_map, direct_with_antigravity_brain,
             };
 
             let mut b = Backend::open(&a);
@@ -532,6 +532,7 @@ async fn cli() {
                 model,
                 effort,
                 auth_mode: AntigravityAuthMode::AgyMcpHost,
+                execution_scope: AntigravityExecutionScope::DeviceFleet,
                 fleet_node,
                 custom_fleet_addresses: default_fleet_address_map(),
             };
