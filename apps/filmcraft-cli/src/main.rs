@@ -493,6 +493,57 @@ async fn cli() {
                 fail(format!("mcp: {e}"));
             }
         }
+        "antigravity-direct" => {
+            use filmcraft_automation::antigravity_brain::{
+                AntigravityAuthMode, AntigravityDirectRequest, AntigravityEffortLevel,
+                AntigravityFleetNodeId, AntigravityModelId, AntigravityVibePreset,
+                default_fleet_address_map, direct_with_antigravity_brain,
+            };
+
+            let mut b = Backend::open(&a);
+            let Backend::Local(ref mut s) = b else {
+                usage("antigravity-direct runs on a local headless Session (omit --bridge)");
+            };
+
+            let preset = a
+                .opt("--preset")
+                .and_then(AntigravityVibePreset::from_slug)
+                .unwrap_or(AntigravityVibePreset::LuxuryCommercial3Act);
+            let model = a
+                .opt("--model")
+                .and_then(AntigravityModelId::from_str_id)
+                .unwrap_or(AntigravityModelId::Gemini31Pro);
+            let effort = a
+                .opt("--effort")
+                .and_then(AntigravityEffortLevel::from_str_tier)
+                .unwrap_or(AntigravityEffortLevel::High);
+            let fleet_node = a
+                .opt("--node")
+                .and_then(AntigravityFleetNodeId::from_str_node)
+                .unwrap_or(AntigravityFleetNodeId::AutoBest);
+            let prompt = a
+                .opt("--prompt")
+                .map(str::to_owned)
+                .unwrap_or_else(|| preset.default_prompt().to_owned());
+
+            let req = AntigravityDirectRequest {
+                prompt,
+                preset,
+                model,
+                effort,
+                auth_mode: AntigravityAuthMode::AgyMcpHost,
+                fleet_node,
+                custom_fleet_addresses: default_fleet_address_map(),
+            };
+
+            let outcome = match direct_with_antigravity_brain(s, &req) {
+                Ok(o) => o,
+                Err(e) => fail(format!("antigravity-direct: {e}")),
+            };
+            b.finish(&a).await;
+            let val = serde_json::to_value(&outcome).unwrap_or_else(|e| fail(e));
+            print(&a, &val);
+        }
         other => usage(format!("unknown subcommand `{other}`")),
     }
 }

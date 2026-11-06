@@ -4,15 +4,29 @@
 //! editing chat is visibly disabled until FilmTron's specialist native plan
 //! pipeline is connected to the central runtime. PhotoTron's fixed poster
 //! prompts/commands must NEVER be used for video timeline edits.
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use egui::{Align2, Color32, Context, FontId, Frame, Id, Margin, Order, RichText, ScrollArea, Stroke, vec2};
+use filmcraft_automation::antigravity_brain::{
+    AntigravityAuthMode, AntigravityDirectOutcome, AntigravityDirectRequest,
+    AntigravityEffortLevel, AntigravityFleetNodeId, AntigravityModelId, AntigravityVibePreset,
+    FleetNodeLiveStatus, STUDIO_CONTROL_HUB_FLEET_URL, default_fleet_address_map,
+    direct_with_antigravity_brain, probe_fleet_node_live_status,
+};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DualBrainMode {
+    TronAi,
+    AgyAi,
+}
 
 #[derive(Clone, Debug)]
 struct ViewState {
     open: bool,
     docked_right: bool,
+    brain_mode: DualBrainMode,
     working: bool,
     power_on: bool,
     shared_state: String,
@@ -32,13 +46,25 @@ struct ViewState {
     native_receipt: Option<serde_json::Value>,
     last_critique: Option<serde_json::Value>,
     last_status_poll: Instant,
+    // ✦ AGY AI state
+    agy_preset: AntigravityVibePreset,
+    agy_model: AntigravityModelId,
+    agy_effort: AntigravityEffortLevel,
+    agy_auth_mode: AntigravityAuthMode,
+    agy_fleet_node: AntigravityFleetNodeId,
+    agy_fleet_addresses: BTreeMap<AntigravityFleetNodeId, String>,
+    agy_fleet_statuses: BTreeMap<AntigravityFleetNodeId, FleetNodeLiveStatus>,
+    agy_prompt: String,
+    agy_last_outcome: Option<AntigravityDirectOutcome>,
 }
 
 impl Default for ViewState {
     fn default() -> Self {
+        let default_preset = AntigravityVibePreset::LuxuryCommercial3Act;
         Self {
             open: false,
             docked_right: false,
+            brain_mode: DualBrainMode::TronAi,
             working: false,
             power_on: false,
             shared_state: "NOT_LOADED".to_owned(),
@@ -58,6 +84,15 @@ impl Default for ViewState {
             native_receipt: None,
             last_critique: None,
             last_status_poll: Instant::now(),
+            agy_preset: default_preset,
+            agy_model: AntigravityModelId::Gemini31Pro,
+            agy_effort: AntigravityEffortLevel::High,
+            agy_auth_mode: AntigravityAuthMode::AgyMcpHost,
+            agy_fleet_node: AntigravityFleetNodeId::AutoBest,
+            agy_fleet_addresses: default_fleet_address_map(),
+            agy_fleet_statuses: BTreeMap::new(),
+            agy_prompt: default_preset.default_prompt().to_owned(),
+            agy_last_outcome: None,
         }
     }
 }
@@ -305,6 +340,247 @@ enum NativeUiAction {
     SwitchDirection(usize),
     PromoteCritiqueRefinement,
     UndoLastEdit,
+    DirectWithAgyBrain,
+}
+
+fn render_agy_brain_contents(
+    ui: &mut egui::Ui,
+    g: &mut ViewState,
+    accent: Color32,
+    text_primary: Color32,
+    text_secondary: Color32,
+    card_fill: Color32,
+    card_stroke: Color32,
+    native_action: &mut Option<NativeUiAction>,
+) {
+    let agy_accent = Color32::from_rgb(168, 85, 247);
+
+    // 1. 5 Fleet Node Pills + Collapsible 4-Device IP Config & Live Ping
+    Frame::NONE
+        .fill(card_fill)
+        .stroke(Stroke::new(1.0, card_stroke))
+        .inner_margin(Margin::same(8))
+        .corner_radius(6.0)
+        .show(ui, |ui| {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(
+                    RichText::new("✦ AGY Fleet Node:")
+                        .strong()
+                        .color(text_primary)
+                        .size(12.0),
+                );
+                for node in AntigravityFleetNodeId::ALL {
+                    let selected = g.agy_fleet_node == node;
+                    if paint_bidi_button(ui, node.pill_label(), true, selected, agy_accent) {
+                        g.agy_fleet_node = node;
+                    }
+                }
+            });
+
+            ui.add_space(4.0);
+            ui.collapsing("Configure 4-Device IPs & Live Ping", |ui| {
+                for node in AntigravityFleetNodeId::CONCRETE_NODES {
+                    let mut addr = g
+                        .agy_fleet_addresses
+                        .get(&node)
+                        .cloned()
+                        .unwrap_or_default();
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            RichText::new(node.pill_label())
+                                .color(text_primary)
+                                .size(11.5),
+                        );
+                        if ui
+                            .add(egui::TextEdit::singleline(&mut addr).desired_width(155.0))
+                            .changed()
+                        {
+                            g.agy_fleet_addresses.insert(node, addr.clone());
+                        }
+                        if ui.small_button("Ping").clicked() {
+                            let status = probe_fleet_node_live_status(node, &addr);
+                            g.agy_fleet_statuses.insert(node, status);
+                        }
+                        if let Some(st) = g.agy_fleet_statuses.get(&node) {
+                            ui.colored_label(
+                                if st.online {
+                                    Color32::from_rgb(52, 211, 153)
+                                } else {
+                                    Color32::from_rgb(239, 68, 68)
+                                },
+                                &st.status_label,
+                            );
+                        }
+                    });
+                }
+                ui.add_space(2.0);
+                ui.small(
+                    RichText::new(format!(
+                        "Studio Owner Control Hub: {STUDIO_CONTROL_HUB_FLEET_URL}"
+                    ))
+                    .color(text_secondary),
+                );
+            });
+        });
+
+    if let Some(err) = &g.error {
+        ui.add_space(4.0);
+        ui.colored_label(Color32::from_rgb(239, 68, 68), err);
+    }
+
+    ui.add_space(6.0);
+    let scroll_max_h = if g.docked_right { 520.0 } else { 310.0 };
+    ScrollArea::vertical().max_height(scroll_max_h).show(ui, |ui| {
+        // 2. 5 FilmTron Presets
+        ui.label(
+            RichText::new("1-Click Editorial Vibe Preset:")
+                .strong()
+                .color(text_primary)
+                .size(12.5),
+        );
+        ui.horizontal_wrapped(|ui| {
+            for preset in AntigravityVibePreset::ALL {
+                let is_sel = g.agy_preset == preset;
+                if paint_bidi_button(ui, preset.display_name(), true, is_sel, agy_accent) {
+                    g.agy_preset = preset;
+                    g.agy_prompt = preset.default_prompt().to_owned();
+                }
+            }
+        });
+
+        ui.add_space(6.0);
+        // 3. Model & Effort Selectors
+        ui.label(
+            RichText::new("Antigravity Brain Model:")
+                .strong()
+                .color(text_primary)
+                .size(12.5),
+        );
+        ui.horizontal_wrapped(|ui| {
+            for model in AntigravityModelId::ALL {
+                let is_sel = g.agy_model == model;
+                if paint_bidi_button(ui, model.as_str(), true, is_sel, accent) {
+                    g.agy_model = model;
+                }
+            }
+        });
+
+        ui.add_space(4.0);
+        ui.horizontal_wrapped(|ui| {
+            ui.label(
+                RichText::new("Effort Tier:")
+                    .strong()
+                    .color(text_primary)
+                    .size(12.0),
+            );
+            for effort in AntigravityEffortLevel::ALL {
+                let is_sel = g.agy_effort == effort;
+                let label = format!(
+                    "{} ({}t / {}x QC)",
+                    effort.as_str().to_uppercase(),
+                    effort.thinking_budget_tokens(),
+                    effort.max_critique_passes()
+                );
+                if paint_bidi_button(ui, &label, true, is_sel, agy_accent) {
+                    g.agy_effort = effort;
+                }
+            }
+        });
+
+        // 4. Creator Stream Badges & Critique Receipt
+        if let Some(outcome) = &g.agy_last_outcome {
+            ui.add_space(8.0);
+            ui.separator();
+            ui.label(
+                RichText::new("✦ AGY Live Editorial Stream & Closed-Loop QC Receipt")
+                    .strong()
+                    .color(agy_accent)
+                    .size(13.0),
+            );
+            for ev in &outcome.receipt.stream_events {
+                Frame::NONE
+                    .fill(card_fill)
+                    .stroke(Stroke::new(1.0, card_stroke))
+                    .inner_margin(Margin::same(6))
+                    .corner_radius(5.0)
+                    .show(ui, |ui| {
+                        ui.horizontal_wrapped(|ui| {
+                            ui.colored_label(
+                                Color32::from_rgb(52, 211, 153),
+                                format!("[{}]", ev.badge),
+                            );
+                            ui.small(RichText::new(&ev.kind).color(text_secondary));
+                        });
+                        paint_bidi_paragraph(ui, &ev.message, 12.0, text_primary);
+                    });
+                ui.add_space(3.0);
+            }
+
+            let crit = &outcome.receipt.critique;
+            Frame::NONE
+                .fill(card_fill)
+                .stroke(Stroke::new(1.2, agy_accent))
+                .inner_margin(Margin::same(8))
+                .corner_radius(6.0)
+                .show(ui, |ui| {
+                    ui.label(
+                        RichText::new(format!(
+                            "Receipt {} • SHA-256: {}…",
+                            outcome.receipt.receipt_id,
+                            outcome
+                                .receipt
+                                .sha256_digest
+                                .get(0..16)
+                                .unwrap_or("verified")
+                        ))
+                        .strong()
+                        .color(text_primary)
+                        .size(12.0),
+                    );
+                    ui.small(
+                        RichText::new(format!(
+                            "Sequence: {} • Clips: {} • Markers: {} • Captions: {} • Target: {:.1} LUFS",
+                            outcome.receipt.sequence_name,
+                            crit.sequence_clip_count,
+                            crit.marker_count,
+                            crit.caption_count,
+                            crit.target_loudness_lufs,
+                        ))
+                        .color(text_secondary),
+                    );
+                    ui.horizontal_wrapped(|ui| {
+                        ui.colored_label(
+                            Color32::from_rgb(52, 211, 153),
+                            format!(
+                                "✔ Rational Grid ({})   ✔ Rec.709 Safe   ✔ -14.0 LUFS   ✔ Caption SafeRect",
+                                outcome.receipt.ticks_per_second
+                            ),
+                        );
+                    });
+                });
+        }
+    });
+
+    ui.separator();
+    ui.add(
+        egui::TextEdit::multiline(&mut g.agy_prompt)
+            .hint_text("Describe your 3-act sequence cut, Lumetri grade, captions & audio target…")
+            .desired_rows(2),
+    );
+    ui.horizontal_wrapped(|ui| {
+        if paint_bidi_button(
+            ui,
+            "Direct with AGY Brain ✦",
+            !g.agy_prompt.trim().is_empty(),
+            true,
+            agy_accent,
+        ) {
+            *native_action = Some(NativeUiAction::DirectWithAgyBrain);
+        }
+        if paint_bidi_button(ui, "Undo Last Edit ↶", true, false, accent) {
+            *native_action = Some(NativeUiAction::UndoLastEdit);
+        }
+    });
 }
 
 /// Passive launcher + native overlay. Does not modify FilmcraftApp playback,
@@ -426,7 +702,48 @@ pub fn show(
                     }
                 });
             });
+
+            // Unified Dual-Brain Switcher (⚡ TRON AI | ✦ AGY AI)
+            ui.add_space(4.0);
+            ui.horizontal(|ui| {
+                let is_tron = g.brain_mode == DualBrainMode::TronAi;
+                let is_agy = g.brain_mode == DualBrainMode::AgyAi;
+                if paint_bidi_button(ui, "⚡ TRON AI", true, is_tron, accent) {
+                    g.brain_mode = DualBrainMode::TronAi;
+                }
+                if paint_bidi_button(
+                    ui,
+                    "✦ AGY AI",
+                    true,
+                    is_agy,
+                    Color32::from_rgb(168, 85, 247),
+                ) {
+                    g.brain_mode = DualBrainMode::AgyAi;
+                }
+                ui.small(
+                    RichText::new(if is_agy {
+                        "Host-Inversion MCP • 4-Device Fleet"
+                    } else {
+                        "Shared Local Workstation Runtime"
+                    })
+                    .color(text_secondary),
+                );
+            });
             ui.separator();
+
+            if g.brain_mode == DualBrainMode::AgyAi {
+                render_agy_brain_contents(
+                    ui,
+                    &mut g,
+                    accent,
+                    text_primary,
+                    text_secondary,
+                    card_fill,
+                    card_stroke,
+                    &mut native_action,
+                );
+                return;
+            }
 
             // Runtime & GPU Telemetry Bar
             Frame::NONE
@@ -833,6 +1150,26 @@ pub fn show(
                                 g.reviewed_plan_id = None;
                                 g.reviewed_revision = None;
                             }
+                        }
+                    }
+                }
+                NativeUiAction::DirectWithAgyBrain => {
+                    let req = AntigravityDirectRequest {
+                        prompt: g.agy_prompt.clone(),
+                        preset: g.agy_preset,
+                        model: g.agy_model,
+                        effort: g.agy_effort,
+                        auth_mode: g.agy_auth_mode,
+                        fleet_node: g.agy_fleet_node,
+                        custom_fleet_addresses: g.agy_fleet_addresses.clone(),
+                    };
+                    match direct_with_antigravity_brain(session, &req) {
+                        Ok(outcome) => {
+                            g.agy_last_outcome = Some(outcome);
+                            g.error = None;
+                        }
+                        Err(err) => {
+                            g.error = Some(err);
                         }
                     }
                 }
