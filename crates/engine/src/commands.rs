@@ -1471,6 +1471,11 @@ fn build() -> Vec<CommandSpec> {
             q["format"] = json!("otio");
             crate::interchange::export(s, &q)
         }),
+        cmd!("file.exportPrproj", "Premiere Pro Project (.prproj)…", ["File", "Export"], None, r#"{"path":str,"sequence":id?}"#, has_seq, |s, p| {
+            let mut q = p.clone();
+            q["format"] = json!("prproj");
+            crate::interchange::export(s, &q)
+        }),
         cmd!(
             "file.exportAaf",
             "AAF…",
@@ -4399,6 +4404,38 @@ fn install_project(s: &mut Session, proj: filmcraft_project::Project, path: Opti
 
 fn open_project(s: &mut Session, path: &str) -> Result<Value> {
     let bytes = s.services.read_file(path).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
+    let ext = std::path::Path::new(path).extension().and_then(|e| e.to_str()).map(str::to_ascii_lowercase);
+    if matches!(ext.as_deref(), Some("prproj")) || filmcraft_interchange::prproj::sniff(&bytes, ext.as_deref()) {
+        let p = std::path::Path::new(path);
+        let opts = filmcraft_interchange::ImportOptions {
+            base_dir: p.parent().map(|d| d.to_string_lossy().to_string()),
+            name: p.file_stem().map(|n| n.to_string_lossy().to_string()),
+            ..Default::default()
+        };
+        let (imported, report) = filmcraft_interchange::import_with(&bytes, filmcraft_interchange::Format::Prproj, &opts)
+            .map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
+        // Install with None path so subsequent Save asks for .fcproj and never overwrites original .prproj
+        install_project(s, imported.project, None, false);
+        if let Some(seq) = s.state.active_sequence {
+            s.events.push(crate::Event::OpenSequence(seq));
+        }
+        let warnings: Vec<String> = report
+            .entries
+            .iter()
+            .map(|e| if e.count > 1 { format!("{} (×{})", e.message, e.count) } else { e.message.clone() })
+            .collect();
+        if !warnings.is_empty() {
+            s.toast(format!("Imported Premiere Pro project with {} compatibility note(s)", warnings.len()));
+        }
+        let missing = crate::relink::on_open(s);
+        return Ok(json!({
+            "path": path,
+            "format": "prproj",
+            "sequences": imported.sequences.iter().map(|i| i.0).collect::<Vec<_>>(),
+            "report": warnings,
+            "missingMedia": missing
+        }));
+    }
     let loaded = filmcraft_format::decode(&bytes).map_err(|e| EngineError::Other(format!("{path}: {e}")))?;
     let (from, migrated) = (loaded.schema_version, loaded.migrated());
     install_project(s, loaded.project, Some(path.to_string()), true);
