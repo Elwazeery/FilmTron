@@ -552,6 +552,20 @@ impl AuthorizedWorkspace {
         if trimmed.contains('\0') {
             return Err(AutomationError::BadRequest("file path contains NUL byte".into()));
         }
+        #[cfg(not(windows))]
+        {
+            let bytes = trimmed.as_bytes();
+            let is_win_drive = bytes.len() >= 3
+                && bytes[0].is_ascii_alphabetic()
+                && bytes[1] == b':'
+                && (bytes[2] == b'\\' || bytes[2] == b'/');
+            let is_win_unc = trimmed.starts_with("\\\\");
+            if is_win_drive || is_win_unc {
+                return Err(AutomationError::BadRequest(format!(
+                    "ACCESS_DENIED: path `{raw}` is outside authorized workspace roots"
+                )));
+            }
+        }
         let path = Path::new(trimmed);
         for comp in path.components() {
             match comp {

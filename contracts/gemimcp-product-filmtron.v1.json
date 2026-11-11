@@ -35,7 +35,7 @@
     }
   ],
   "semanticToolCount": 32,
-  "engineCommandToolCount": 701,
+  "engineCommandToolCount": 702,
   "semanticTools": [
     {
       "name": "film.project.new",
@@ -2723,6 +2723,44 @@
         },
         "required": [
           "\"path\""
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "name": "film.cmd.file.exportPrproj",
+      "family": "projects_and_media",
+      "engineCommand": "file.exportPrproj",
+      "description": "Premiere Pro Project (.prproj)… (File > Export)",
+      "requiredScope": "filmtron:edit",
+      "mutating": true,
+      "supportsRevisionFence": true,
+      "supportsIdempotencyKey": true,
+      "inputSchema": {
+        "additionalProperties": true,
+        "description": "{\"path\":str,\"sequence\":id?}",
+        "properties": {
+          "\"path\"": {
+            "description": "str",
+            "type": "string"
+          },
+          "\"sequence\"": {
+            "description": "id?",
+            "type": "string"
+          },
+          "expectedRevision": {
+            "description": "Optional optimistic concurrency fence matching Session::revision.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "idempotencyKey": {
+            "description": "Optional client-generated idempotency key for safe retry reconciliation.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "\"path\"",
+          "\"sequence\""
         ],
         "type": "object"
       }
